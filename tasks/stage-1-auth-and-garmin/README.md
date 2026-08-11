@@ -6,6 +6,8 @@
 
 ## Зависимости и порядок
 
+Перед подачей заявки Garmin рекомендуется выполнить независимую задачу [TRP-000 — публичный лендинг TRAPEAK](../TRP-000-public-landing-page.md). Она не блокирует проектирование приложения, но должна быть опубликована до отправки заявки в Garmin Connect Developer Program.
+
 | ID | Задача | Зависит от | Исполнитель |
 |---|---|---|---|
 | TRP-001 | Архитектура и стек | — | Claude + owner decision |
@@ -43,4 +45,3 @@ TRP-005 запускается параллельно сразу. Без одо�
 - [TRP-008](TRP-008-token-lifecycle.md)
 - [TRP-009](TRP-009-integrations-ui.md)
 - [TRP-010](TRP-010-quality-and-observability.md)
-
