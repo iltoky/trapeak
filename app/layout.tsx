@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import "./guides.css";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -13,10 +14,14 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "TRAPEAK — Your fitness data, available to any AI",
-  description: "Connect Garmin once and securely use your training data with ChatGPT, Claude, and other MCP-compatible assistants.",
+  title: {
+    default: "TRAPEAK — Fitness data infrastructure for AI",
+    template: "%s | TRAPEAK",
+  },
+  description: "TRAPEAK is developing a secure, user-specific MCP connection for authorized fitness data and compatible AI assistants. Garmin is the first planned integration, subject to approval.",
   metadataBase: new URL("https://trapeak.com"),
-  openGraph: { title: "TRAPEAK — Your fitness data, available to any AI", description: "A secure MCP connection between your fitness data and the AI assistant you choose.", url: "https://trapeak.com", siteName: "TRAPEAK", type: "website" },
+  alternates: { canonical: "/" },
+  openGraph: { title: "TRAPEAK — Fitness data infrastructure for AI", description: "A planned secure MCP connection between authorized fitness data and the AI assistant a user chooses.", url: "https://trapeak.com", siteName: "TRAPEAK", type: "website" },
   icons: {
     icon: "/favicon.svg",
     shortcut: "/favicon.svg",

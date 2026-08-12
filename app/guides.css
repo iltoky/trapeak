@@ -1,0 +1,323 @@
+/* Shared layout for the public AI-search guides. */
+body > main:not(.legal) > footer.shell {
+  grid-template-columns: 1.6fr 1fr 1.15fr 1fr 1.25fr;
+}
+
+.guide-hero {
+  padding: 34px 0 110px;
+}
+
+.guide-breadcrumb {
+  display: flex;
+  gap: 9px;
+  margin: 0 0 82px;
+  color: #999;
+  font: 500 10px var(--font-geist-mono);
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+
+.guide-breadcrumb a {
+  color: #333;
+}
+
+.guide-hero h1 {
+  max-width: 1050px;
+  margin: 38px 0 64px;
+  font-size: clamp(62px, 8.6vw, 122px);
+  font-weight: 580;
+  letter-spacing: -.075em;
+  line-height: .9;
+}
+
+.guide-hero-bottom {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 100px;
+  margin-left: 25%;
+  align-items: start;
+}
+
+.guide-hero-bottom > p {
+  margin: 0;
+  color: #4f4f4f;
+  font-size: 18px;
+  line-height: 1.65;
+}
+
+.guide-status {
+  border-top: 1px solid var(--line);
+  padding-top: 18px;
+}
+
+.guide-status b,
+.guide-status span {
+  font: 600 9px var(--font-geist-mono);
+  letter-spacing: .11em;
+}
+
+.guide-status span {
+  float: right;
+  background: var(--lime);
+  padding: 5px 8px;
+}
+
+.guide-status p {
+  clear: both;
+  margin: 32px 0 0;
+  color: #777;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.guide-answer {
+  background: var(--soft);
+  padding: 110px 0;
+}
+
+.guide-answer-grid {
+  display: grid;
+  grid-template-columns: 1fr 3fr;
+  gap: 60px;
+}
+
+.guide-answer h2 {
+  max-width: 850px;
+  margin: 0;
+  font-size: clamp(36px, 4.4vw, 61px);
+  font-weight: 550;
+  letter-spacing: -.055em;
+  line-height: 1.05;
+}
+
+.guide-section {
+  padding: 125px 0;
+}
+
+.guide-heading,
+.guide-prompts {
+  display: grid;
+  grid-template-columns: 1fr 1.6fr;
+  gap: 100px;
+}
+
+.guide-heading h2,
+.guide-data h2,
+.guide-prompts h2 {
+  margin: 0;
+  font-size: clamp(46px, 5.5vw, 76px);
+  font-weight: 560;
+  letter-spacing: -.06em;
+  line-height: .98;
+}
+
+.guide-steps {
+  list-style: none;
+  margin: 80px 0 0 38%;
+  padding: 0;
+  border-top: 1px solid var(--line);
+}
+
+.guide-steps li {
+  display: grid;
+  grid-template-columns: 70px 1fr;
+  border-bottom: 1px solid var(--line);
+  padding: 28px 0;
+}
+
+.guide-steps li > span,
+.guide-data li span {
+  color: #999;
+  font: 500 9px var(--font-geist-mono);
+}
+
+.guide-steps h3 {
+  margin: 0 0 8px;
+  font-size: 21px;
+  letter-spacing: -.03em;
+}
+
+.guide-steps p {
+  max-width: 610px;
+  margin: 0;
+  color: #666;
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.guide-data {
+  background: #0b0b0b;
+  color: white;
+  padding: 120px 0;
+}
+
+.guide-data-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 110px;
+}
+
+.guide-data-grid > div > p:last-child {
+  max-width: 540px;
+  margin: 35px 0 0;
+  color: #999;
+  font-size: 15px;
+  line-height: 1.7;
+}
+
+.guide-data ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid #333;
+}
+
+.guide-data li {
+  display: grid;
+  grid-template-columns: 45px 1fr;
+  border-bottom: 1px solid #333;
+  padding: 25px 0;
+  color: #ddd;
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.guide-prompts {
+  padding: 125px 0;
+}
+
+.prompt-list blockquote {
+  margin: 0;
+  border-top: 1px solid var(--line);
+  padding: 25px 0;
+  font-size: 20px;
+  line-height: 1.45;
+  letter-spacing: -.02em;
+}
+
+.prompt-list blockquote:last-of-type {
+  border-bottom: 1px solid var(--line);
+}
+
+.prompt-list small {
+  display: block;
+  margin-top: 25px;
+  color: #999;
+  font-size: 10px;
+  line-height: 1.6;
+}
+
+.guide-faq {
+  border-top: 1px solid var(--line);
+}
+
+.guide-related {
+  background: var(--soft);
+  padding: 90px 0;
+}
+
+.related-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  border-top: 1px solid #ccc;
+}
+
+.related-grid a {
+  display: flex;
+  justify-content: space-between;
+  min-height: 120px;
+  border-bottom: 1px solid #ccc;
+  padding: 24px 30px 24px 0;
+  font-size: 17px;
+}
+
+.related-grid a + a {
+  border-left: 1px solid #ccc;
+  padding-left: 30px;
+}
+
+.related-grid b {
+  font-weight: 400;
+}
+
+.guide-footer {
+  grid-template-columns: 2fr 1.4fr 1fr 1.3fr;
+}
+
+@media (max-width: 900px) {
+  body > main:not(.legal) > footer.shell,
+  .guide-footer {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .guide-hero {
+    padding-bottom: 80px;
+  }
+
+  .guide-breadcrumb {
+    margin-bottom: 60px;
+  }
+
+  .guide-hero h1 {
+    margin-bottom: 48px;
+  }
+
+  .guide-hero-bottom {
+    grid-template-columns: 1fr;
+    gap: 35px;
+    margin-left: 0;
+  }
+
+  .guide-answer {
+    padding: 75px 0;
+  }
+
+  .guide-answer-grid,
+  .guide-heading,
+  .guide-data-grid,
+  .guide-prompts {
+    grid-template-columns: 1fr;
+    gap: 45px;
+  }
+
+  .guide-section,
+  .guide-prompts {
+    padding: 85px 0;
+  }
+
+  .guide-steps {
+    margin: 55px 0 0;
+  }
+
+  .guide-data {
+    padding: 85px 0;
+  }
+
+  .related-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .related-grid a + a {
+    border-left: 0;
+    padding-left: 0;
+  }
+}
+
+@media (max-width: 520px) {
+  .guide-hero h1 {
+    font-size: 56px;
+  }
+
+  .guide-answer h2 {
+    font-size: 35px;
+  }
+
+  .guide-steps li {
+    grid-template-columns: 42px 1fr;
+  }
+
+  body > main:not(.legal) > footer.shell,
+  .guide-footer {
+    grid-template-columns: 1fr;
+  }
+}
