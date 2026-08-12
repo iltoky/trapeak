@@ -18,7 +18,15 @@ const authConfigured = Boolean(
 const configuredProxy = authConfigured
   ? clerkMiddleware(async (auth, request) => {
       if (isProtectedRoute(request)) {
-        await auth.protect();
+        const { userId } = await auth();
+
+        if (!userId && request.nextUrl.pathname.startsWith("/api/")) {
+          return Response.json({ error: "Unauthorized" }, { status: 401 });
+        }
+
+        if (!userId) {
+          return NextResponse.redirect(new URL("/sign-in", request.url));
+        }
       }
     })
   : null;
