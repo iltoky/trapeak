@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { SiteHeader } from "./site-header";
+import { BrandIcon, BrandLogo } from "./brand";
 
 type Step = {
   title: string;
@@ -32,12 +33,6 @@ const guides = [
   { href: "/garmin-mcp", label: "Garmin MCP" },
   { href: "/wearable-mcp", label: "Wearable MCP" },
 ];
-
-const Braces = ({ small = false }: { small?: boolean }) => (
-  <span className={small ? "braces small" : "braces"} aria-hidden="true">
-    <span>{"{"}</span><i /><span>{"}"}</span>
-  </span>
-);
 
 export default function AiSearchPage({
   slug,
@@ -158,11 +153,11 @@ export default function AiSearchPage({
       </section>
 
       <section className="final-cta">
-        <div className="shell"><Braces /><h2>Follow the build.</h2><p>Join early access and hear when the first approved integration is available.</p><a className="button gradient" href="mailto:support@trapeak.com?subject=TRAPEAK%20early%20access">Join early access <span>↗</span></a></div>
+        <div className="shell"><BrandIcon className="cta-brand-icon" size={70} /><h2>Follow the build.</h2><p>Join early access and hear when the first approved integration is available.</p><a className="button gradient" href="mailto:support@trapeak.com?subject=TRAPEAK%20early%20access">Join early access <span>↗</span></a></div>
       </section>
 
       <footer className="shell guide-footer">
-        <div className="footer-brand"><Link className="wordmark" href="/"><Braces small /> TRAPEAK</Link><p>Fitness data infrastructure for AI.</p></div>
+        <div className="footer-brand"><Link className="wordmark" href="/" aria-label="TRAPEAK home"><BrandLogo /></Link><p>Fitness data infrastructure for AI.</p></div>
         <div><Link className="footer-heading-link" href="/ai-guides">AI GUIDES</Link>{guides.map((guide) => <Link href={guide.href} key={guide.href}>{guide.label}</Link>)}</div>
         <div><b>LEGAL</b><Link href="/privacy">Privacy Policy</Link><Link href="/terms">Terms of Service</Link><Link href="/data-deletion">Data Deletion</Link></div>
         <div><b>CONTACT</b><a href="mailto:support@trapeak.com">support@trapeak.com</a></div>

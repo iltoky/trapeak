@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { SiteHeader } from "../site-header";
+import { BrandLogo } from "../brand";
 
 export const metadata: Metadata = {
   title: "AI guides",
@@ -35,7 +36,7 @@ export default function AiGuidesPage() {
         ))}
       </section>
       <footer className="shell guide-footer">
-        <div className="footer-brand"><Link className="wordmark" href="/">TRAPEAK</Link><p>Fitness data infrastructure for AI.</p></div>
+        <div className="footer-brand"><Link className="wordmark" href="/" aria-label="TRAPEAK home"><BrandLogo /></Link><p>Fitness data infrastructure for AI.</p></div>
         <div><b>LEGAL</b><Link href="/privacy">Privacy Policy</Link><Link href="/terms">Terms of Service</Link><Link href="/data-deletion">Data Deletion</Link></div>
         <div><b>CONTACT</b><a href="mailto:support@trapeak.com">support@trapeak.com</a></div>
         <p className="copyright">© 2026 TRAPEAK. Product in development. Third-party names and trademarks are used descriptively and do not imply endorsement or partnership.</p>

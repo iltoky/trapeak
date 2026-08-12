@@ -1,19 +1,14 @@
 import Link from "next/link";
 import { Show, UserButton } from "@clerk/nextjs";
 import { isAuthConfigured } from "@/lib/auth/config";
-
-const Braces = () => (
-  <span className="braces small" aria-hidden="true">
-    <span>{"{"}</span><i /><span>{"}"}</span>
-  </span>
-);
+import { BrandLogo } from "./brand";
 
 export function SiteHeader() {
   const authConfigured = isAuthConfigured();
 
   return (
     <header className="nav shell">
-      <Link className="wordmark" href="/" aria-label="TRAPEAK home"><Braces /> TRAPEAK</Link>
+      <Link className="wordmark" href="/" aria-label="TRAPEAK home"><BrandLogo /></Link>
       <nav aria-label="Main navigation">
         <Link href="/#how">How it works</Link>
         <Link href="/ai-guides">AI guides</Link>

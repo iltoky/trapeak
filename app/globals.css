@@ -5,3 +5,5 @@
 .footer-heading-link{font:600 9px var(--font-geist-mono);letter-spacing:.12em;margin-bottom:10px}
 .nav-auth{display:flex;align-items:center;gap:18px}.nav-sign-in{font-size:13px;color:#555}.nav-sign-in:hover{color:var(--ink)}
 @media(max-width:800px){.nav-auth{gap:10px}.nav-sign-in{display:none}}
+.brand-logo{display:block;width:168px;height:auto}.brand-icon{display:block}.footer-brand .brand-logo{width:180px}.hero-mark .brand-icon{width:280px;height:280px}.step-icon.branded-step-icon{padding:5px}.step-brand-icon{width:44px;height:44px;border-radius:10px}.chat-brand-icon{width:26px;height:26px;border-radius:6px}.final-cta .cta-brand-icon{width:70px;height:70px;margin:0 auto}.guide-footer .brand-logo{width:180px}
+@media(max-width:800px){.brand-logo{width:142px}.footer-brand .brand-logo,.guide-footer .brand-logo{width:160px}.hero-mark .brand-icon{width:220px;height:220px}}

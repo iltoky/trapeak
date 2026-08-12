@@ -27,8 +27,12 @@ export const metadata: Metadata = {
   alternates: { canonical: "/" },
   openGraph: { title: "TRAPEAK — Fitness data infrastructure for AI", description: "A planned secure MCP connection between authorized fitness data and the AI assistant a user chooses.", url: "https://trapeak.com", siteName: "TRAPEAK", type: "website" },
   icons: {
-    icon: "/favicon.svg",
-    shortcut: "/favicon.svg",
+    icon: [
+      { url: "/brand/trapeak-app-icon.svg", type: "image/svg+xml" },
+      { url: "/brand/trapeak-app-icon.png", type: "image/png", sizes: "512x512" },
+    ],
+    shortcut: "/brand/trapeak-app-icon.svg",
+    apple: "/brand/trapeak-app-icon.png",
   },
 };
 
@@ -50,7 +54,18 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         {isAuthConfigured() ? (
-          <ClerkProvider>{content}</ClerkProvider>
+          <ClerkProvider
+            appearance={{
+              options: {
+                logoImageUrl: "/brand/trapeak-logo.svg",
+                logoLinkUrl: "https://trapeak.com",
+                privacyPageUrl: "https://trapeak.com/privacy",
+                termsPageUrl: "https://trapeak.com/terms",
+              },
+            }}
+          >
+            {content}
+          </ClerkProvider>
         ) : (
           content
         )}
