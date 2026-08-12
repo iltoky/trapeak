@@ -5,16 +5,17 @@
 Переменные окружения содержат конфигурацию экземпляра TRAPEAK, общую для всех пользователей:
 
 ```env
-DATABASE_URL=
 APP_URL=
-AUTH_SECRET=
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=
+CLERK_SECRET_KEY=
+DATABASE_URL=
 GARMIN_CLIENT_ID=
 GARMIN_CLIENT_SECRET=
 GARMIN_REDIRECT_URI=
 TOKEN_ENCRYPTION_KEY=
 ```
 
-Точные названия Garmin-параметров необходимо сверить в закрытой документации Developer Portal. В Git хранится только `.env.example` без значений.
+Точные названия параметров каждого фитнес-провайдера необходимо сверять в его документации. В Git хранится только `.env.example` без значений. Clerk keys подключаются через Vercel Marketplace или вручную в Vercel Environment Variables.
 
 ## Данные пользователя
 
@@ -36,4 +37,3 @@ TOKEN_ENCRYPTION_KEY=
 - authorization code и токены не логируются;
 - raw OAuth responses не сохраняются;
 - удаление аккаунта, отключение Garmin и удаление тренировок — разные операции.
-

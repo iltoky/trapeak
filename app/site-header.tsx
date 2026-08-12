@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { Show, UserButton } from "@clerk/nextjs";
+import { isAuthConfigured } from "@/lib/auth/config";
 
 const Braces = () => (
   <span className="braces small" aria-hidden="true">
@@ -7,6 +9,8 @@ const Braces = () => (
 );
 
 export function SiteHeader() {
+  const authConfigured = isAuthConfigured();
+
   return (
     <header className="nav shell">
       <Link className="wordmark" href="/" aria-label="TRAPEAK home"><Braces /> TRAPEAK</Link>
@@ -15,7 +19,20 @@ export function SiteHeader() {
         <Link href="/ai-guides">AI guides</Link>
         <Link href="/#faq">FAQ</Link>
       </nav>
-      <a className="button black nav-cta" href="mailto:support@trapeak.com?subject=TRAPEAK%20early%20access">Join early access</a>
+      {authConfigured ? (
+        <div className="nav-auth">
+          <Show when="signed-out">
+            <Link className="nav-sign-in" href="/sign-in">Sign in</Link>
+            <Link className="button black nav-cta" href="/sign-up">Create account</Link>
+          </Show>
+          <Show when="signed-in">
+            <Link className="nav-sign-in" href="/dashboard">Account</Link>
+            <UserButton />
+          </Show>
+        </div>
+      ) : (
+        <a className="button black nav-cta" href="mailto:support@trapeak.com?subject=TRAPEAK%20early%20access">Join early access</a>
+      )}
     </header>
   );
 }

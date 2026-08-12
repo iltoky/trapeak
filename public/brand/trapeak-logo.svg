@@ -1,0 +1,10 @@
+<svg width="1050" height="250" viewBox="0 0 1050 250" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <title>TRAPEAK logo</title>
+  <desc>TRAPEAK wordmark with braces surrounding an ascending road-shaped slash.</desc>
+  <g transform="translate(14 13) scale(3.5)">
+    <path d="M22 16H18C15.7909 16 14 17.7909 14 20V27C14 29.2091 12.2091 31 10 31C12.2091 31 14 32.7909 14 35V44C14 46.2091 15.7909 48 18 48H22" stroke="#090909" stroke-width="2.6" stroke-linecap="round"/>
+    <path d="M42 16H46C48.2091 16 50 17.7909 50 20V27C50 29.2091 51.7909 31 54 31C51.7909 31 50 32.7909 50 35V44C50 46.2091 48.2091 48 46 48H42" stroke="#090909" stroke-width="2.6" stroke-linecap="round"/>
+    <path d="M24.7 42.2L29.4 42.2L39.5 21.8L36.8 21.8L24.7 42.2Z" fill="#D8FF38"/>
+  </g>
+  <text x="245" y="158" fill="#090909" font-family="Geist, Inter, Arial, sans-serif" font-size="90" font-weight="700" letter-spacing="-4">TRAPEAK</text>
+</svg>

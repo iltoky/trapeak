@@ -3,24 +3,24 @@
 ## Принятые решения
 
 - GitHub-репозиторий: `iltoky/trapeak`.
-- Авторизация MVP: регистрация и вход по `email + password`.
+- Авторизация MVP: Clerk с регистрацией и входом по `email + password`.
 - Домен продукта: `trapeak.com`.
 - Итоговый технический стек должен проверить, обосновать и зафиксировать Claude в TRP-001 через ADR.
 - Приоритет MVP: самое быстрое и простое решение без создания собственной auth/session-инфраструктуры.
 
 ## Нужно сейчас
 
-1. Подать заявку в Garmin Connect Developer Program и запросить Activity API.
-2. Определить deployment target после утверждения стека в TRP-001.
-3. Получить доступ к управлению DNS домена `trapeak.com`; менять DNS до выбора deployment target не требуется.
-4. До получения Garmin credentials использовать локальные и тестовые callback URL согласно документации Garmin.
+1. Создать Clerk application для TRAPEAK или установить Clerk через Vercel Marketplace.
+2. В Clerk включить email + password, email verification и password reset; social login для MVP не включать.
+3. Добавить Clerk keys в Development, Preview и Production environment Vercel.
+4. Дождаться результатов заявок Wahoo и Suunto; Garmin остаётся отложенным до возобновления программы.
 
-## Потребуется после одобрения Garmin
+## Потребуется после одобрения первого провайдера
 
 - предоставить разработчику доступ к документации Developer Portal без публикации закрытых материалов;
-- создать приложение/окружение Garmin;
+- создать production application/окружение провайдера;
 - зарегистрировать callback URL для используемых окружений, включая production на домене `trapeak.com`;
-- безопасно добавить Garmin client credentials в secrets окружения;
+- безопасно добавить provider client credentials в secrets окружения;
 - передать подтверждённые scopes, token, revoke, rate-limit и branding requirements;
 - выполнить реальное тестовое подключение в evaluation environment.
 
@@ -28,11 +28,11 @@
 
 - настроить DNS и HTTPS для `trapeak.com`;
 - настроить production secrets вне GitHub-репозитория;
-- определить адрес отправителя и почтовый сервис для писем подтверждения email и восстановления пароля;
+- настроить отправителя писем Clerk на домене TRAPEAK;
 - определить обязательные юридические страницы и контакт поддержки.
 
 ## Не требуется передавать
 
-- логин или пароль от личного Garmin-аккаунта;
-- Garmin-токены в сообщениях или GitHub;
+- логин или пароль от личного аккаунта wearable-провайдера;
+- provider tokens в сообщениях или GitHub;
 - production secrets в файлах задач.

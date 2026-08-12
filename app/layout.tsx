@@ -1,8 +1,11 @@
 import type { Metadata } from "next";
+import { ClerkProvider } from "@clerk/nextjs";
 import { Analytics } from "@vercel/analytics/next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { isAuthConfigured } from "@/lib/auth/config";
 import "./globals.css";
 import "./guides.css";
+import "./auth.css";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -34,13 +37,23 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const content = (
+    <>
+      {children}
+      <Analytics />
+    </>
+  );
+
   return (
     <html lang="en">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        {children}
-        <Analytics />
+        {isAuthConfigured() ? (
+          <ClerkProvider>{content}</ClerkProvider>
+        ) : (
+          content
+        )}
       </body>
     </html>
   );
