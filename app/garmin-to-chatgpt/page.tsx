@@ -19,7 +19,7 @@ export default function GarminToChatGPTPage() {
     title="Bring Garmin context to ChatGPT."
     intro="TRAPEAK is being built to let users authorize access to their Garmin activity data and make selected data available to ChatGPT through a personal MCP connection. The Garmin integration is not available yet and depends on Garmin approval."
     summary="TRAPEAK plans to provide the secure data connection; ChatGPT remains the place where you ask questions and receive answers."
-    status="Garmin API access has been requested for development. TRAPEAK is not an official Garmin partner, and this connection is not currently available."
+    status="Garmin API access has not yet been approved. TRAPEAK is not an official Garmin partner, and this connection is not currently available."
     steps={[
       { title: "Authorize Garmin", description: "When the integration is approved and released, connect through Garmin's official authorization flow and choose the permitted access." },
       { title: "Add TRAPEAK to ChatGPT", description: "Connect a user-specific, read-only TRAPEAK MCP endpoint in a supported ChatGPT experience." },
