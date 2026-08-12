@@ -6,6 +6,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
 
   return [
     { url: baseUrl, lastModified, changeFrequency: "weekly", priority: 1 },
+    { url: `${baseUrl}/ai-guides`, lastModified, changeFrequency: "weekly", priority: 0.9 },
     { url: `${baseUrl}/garmin-to-chatgpt`, lastModified, changeFrequency: "weekly", priority: 0.9 },
     { url: `${baseUrl}/garmin-to-claude`, lastModified, changeFrequency: "weekly", priority: 0.9 },
     { url: `${baseUrl}/garmin-mcp`, lastModified, changeFrequency: "weekly", priority: 0.9 },

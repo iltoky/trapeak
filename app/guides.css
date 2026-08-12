@@ -21,6 +21,73 @@ body > main:not(.legal) > footer.shell {
   color: #333;
 }
 
+.guide-breadcrumb strong {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.guides-index-hero {
+  padding: 34px 0 100px;
+}
+
+.guides-index-hero h1 {
+  margin: 38px 0 42px;
+  font-size: clamp(72px, 11vw, 150px);
+  font-weight: 580;
+  letter-spacing: -.08em;
+  line-height: .86;
+}
+
+.guides-index-hero > p:last-child {
+  width: min(610px, 100%);
+  margin: 0 0 0 38%;
+  color: #555;
+  font-size: 18px;
+  line-height: 1.65;
+}
+
+.guides-index-list {
+  padding-bottom: 130px;
+}
+
+.guides-index-list > a {
+  display: grid;
+  grid-template-columns: 80px 1fr 40px;
+  gap: 30px;
+  align-items: start;
+  border-top: 1px solid var(--line);
+  padding: 34px 0;
+}
+
+.guides-index-list > a:last-child {
+  border-bottom: 1px solid var(--line);
+}
+
+.guides-index-list > a > span {
+  color: #999;
+  font: 500 9px var(--font-geist-mono);
+}
+
+.guides-index-list h2 {
+  margin: 0 0 10px;
+  font-size: clamp(30px, 4vw, 52px);
+  font-weight: 550;
+  letter-spacing: -.055em;
+}
+
+.guides-index-list p {
+  max-width: 650px;
+  margin: 0;
+  color: #666;
+  font-size: 14px;
+  line-height: 1.65;
+}
+
+.guides-index-list b {
+  font-weight: 400;
+  font-size: 20px;
+}
+
 .guide-hero h1 {
   max-width: 1050px;
   margin: 38px 0 64px;
@@ -258,6 +325,10 @@ body > main:not(.legal) > footer.shell {
     margin-bottom: 60px;
   }
 
+  .guides-index-hero > p:last-child {
+    margin-left: 0;
+  }
+
   .guide-hero h1 {
     margin-bottom: 48px;
   }
@@ -314,6 +385,11 @@ body > main:not(.legal) > footer.shell {
 
   .guide-steps li {
     grid-template-columns: 42px 1fr;
+  }
+
+  .guides-index-list > a {
+    grid-template-columns: 42px 1fr 24px;
+    gap: 16px;
   }
 
   body > main:not(.legal) > footer.shell,

@@ -7,6 +7,7 @@ Product status: pre-launch and in development. No wearable integration is public
 ## Core pages
 
 - https://trapeak.com/ — Product overview and current development status
+- https://trapeak.com/ai-guides — Index of practical AI guides
 - https://trapeak.com/garmin-to-chatgpt — Planned Garmin-to-ChatGPT workflow
 - https://trapeak.com/garmin-to-claude — Planned Garmin-to-Claude MCP workflow
 - https://trapeak.com/garmin-mcp — Planned read-only Garmin MCP design
