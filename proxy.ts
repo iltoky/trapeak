@@ -10,6 +10,7 @@ import { isPublicIntegrationPath } from "@/lib/integrations/public-routes";
 const isProtectedRoute = createRouteMatcher([
   "/dashboard(.*)",
   "/api/me(.*)",
+  "/api/nutrition(.*)",
   "/api/integrations(.*)",
 ]);
 
@@ -47,6 +48,7 @@ export function proxy(request: NextRequest, event: NextFetchEvent) {
 
     if (
       request.nextUrl.pathname.startsWith("/api/me") ||
+      request.nextUrl.pathname.startsWith("/api/nutrition") ||
       (request.nextUrl.pathname.startsWith("/api/integrations") &&
         !isPublicIntegrationPath(request.nextUrl.pathname))
     ) {

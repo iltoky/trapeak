@@ -9,9 +9,16 @@ import {
   getMcpAthleteProfiles,
   listMcpActivities,
 } from "@/lib/mcp/data";
+import {
+  getNutritionDaySummaries,
+  listNutritionEntries,
+} from "@/lib/nutrition/data";
+import { nutritionMealTypes } from "@/lib/nutrition/model";
 
 const providerSchema = z.enum(["garmin", "suunto", "wahoo"]);
 const nullableNumber = z.number().nullable();
+const dateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
+const mealTypeSchema = z.enum(nutritionMealTypes);
 const activitySummarySchema = z.object({
   id: z.string().uuid(),
   provider: providerSchema,
@@ -38,6 +45,25 @@ const activityDetailsSchema = activitySummarySchema.extend({
   isManual: z.boolean().nullable(),
   isEdited: z.boolean().nullable(),
   syncedAt: z.string(),
+});
+const nutritionEntrySchema = z.object({
+  id: z.string().uuid(),
+  consumedAt: z.string(),
+  mealType: mealTypeSchema,
+  title: z.string(),
+  caloriesKilocalories: z.number(),
+  proteinGrams: z.number(),
+  carbohydratesGrams: z.number(),
+  fatGrams: z.number(),
+  notes: z.string().nullable(),
+});
+const nutritionDaySummarySchema = z.object({
+  date: dateSchema,
+  entryCount: z.number().int(),
+  caloriesKilocalories: z.number(),
+  proteinGrams: z.number(),
+  carbohydratesGrams: z.number(),
+  fatGrams: z.number(),
 });
 
 const handler = createMcpHandler(
@@ -165,11 +191,86 @@ const handler = createMcpHandler(
         };
       },
     );
+
+    server.registerTool(
+      "list_nutrition_entries",
+      {
+        title: "List nutrition entries",
+        description:
+          "Use this to read the authenticated TRAPEAK user's manually logged meals and macronutrients, optionally filtered by inclusive UTC date range or meal type.",
+        inputSchema: z.object({
+          from: dateSchema.optional().describe(
+            "Inclusive UTC start date in YYYY-MM-DD format.",
+          ),
+          to: dateSchema.optional().describe(
+            "Inclusive UTC end date in YYYY-MM-DD format.",
+          ),
+          mealType: mealTypeSchema.optional(),
+          limit: z.number().int().min(1).max(100).default(30),
+        }),
+        outputSchema: z.object({
+          entries: z.array(nutritionEntrySchema),
+          count: z.number().int(),
+        }),
+        annotations: {
+          readOnlyHint: true,
+          destructiveHint: false,
+          openWorldHint: false,
+        },
+      },
+      async (input, context) => {
+        const userId = requireMcpUserId(context.http?.authInfo);
+        const entries = await listNutritionEntries({ userId, ...input });
+        return {
+          content: [{
+            type: "text",
+            text: `Found ${entries.length} nutrition entries.`,
+          }],
+          structuredContent: {
+            entries: [...entries],
+            count: entries.length,
+          },
+        };
+      },
+    );
+
+    server.registerTool(
+      "get_nutrition_summary",
+      {
+        title: "Get nutrition summary",
+        description:
+          "Use this to calculate daily calories and macronutrient totals from the authenticated TRAPEAK user's manual nutrition log over an inclusive UTC date range.",
+        inputSchema: z.object({
+          from: dateSchema.describe("Inclusive UTC start date in YYYY-MM-DD format."),
+          to: dateSchema.describe("Inclusive UTC end date in YYYY-MM-DD format."),
+        }),
+        outputSchema: z.object({
+          days: z.array(nutritionDaySummarySchema),
+          count: z.number().int(),
+        }),
+        annotations: {
+          readOnlyHint: true,
+          destructiveHint: false,
+          openWorldHint: false,
+        },
+      },
+      async (input, context) => {
+        const userId = requireMcpUserId(context.http?.authInfo);
+        const days = await getNutritionDaySummaries({ userId, ...input });
+        return {
+          content: [{
+            type: "text",
+            text: `Calculated nutrition totals for ${days.length} logged days.`,
+          }],
+          structuredContent: { days: [...days], count: days.length },
+        };
+      },
+    );
   },
   {
-    serverInfo: { name: "trapeak", version: "0.4.0" },
+    serverInfo: { name: "trapeak", version: "0.5.0" },
     instructions:
-      "TRAPEAK provides read-only access to the authenticated user's normalized fitness data. Use get_athlete_profile for personal metrics, list_activities to find workouts, then get_activity for full normalized metrics. Never claim access to raw provider payloads or workouts that are not returned by these tools.",
+      "TRAPEAK provides read-only access to the authenticated user's normalized fitness and manually logged nutrition data. Use get_athlete_profile for personal metrics, list_activities to find workouts, get_activity for full normalized workout metrics, list_nutrition_entries for meals, and get_nutrition_summary for daily macro totals. Never claim access to raw provider payloads or records that are not returned by these tools, and do not present nutrition data as medical advice.",
   },
 );
 

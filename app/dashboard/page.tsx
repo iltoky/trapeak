@@ -6,6 +6,12 @@ import { requireAuthUser } from "@/lib/auth/current-user";
 import { getProviderConnectionSummary } from "@/lib/integrations/connections";
 import { getProviderDataSummary } from "@/lib/integrations/provider-data";
 import { isWahooWebhookConfigured } from "@/lib/integrations/wahoo/config";
+import {
+  getNutritionDaySummaries,
+  listNutritionEntries,
+  type NutritionDaySummary,
+  type NutritionEntry,
+} from "@/lib/nutrition/data";
 import { SiteHeader } from "../site-header";
 
 export const metadata = { title: "Account" };
@@ -23,12 +29,27 @@ const wahooMessages: Readonly<Record<string, string>> = {
   sync_error: "Wahoo data could not be synchronized. Please try again.",
 };
 
+const nutritionMessages: Readonly<Record<string, string>> = {
+  created: "Nutrition entry saved.",
+  deleted: "Nutrition entry deleted.",
+  invalid: "Check the nutrition fields and try again.",
+  storage_error: "Nutrition storage is not available yet.",
+};
+
 function formatSyncTime(value: Date): string {
   return `${new Intl.DateTimeFormat("en-GB", {
     dateStyle: "medium",
     timeStyle: "short",
     timeZone: "UTC",
   }).format(value)} UTC`;
+}
+
+function formatNutritionTime(value: string): string {
+  return `${new Intl.DateTimeFormat("en-GB", {
+    dateStyle: "medium",
+    timeStyle: "short",
+    timeZone: "UTC",
+  }).format(new Date(value))} UTC`;
 }
 
 export default async function DashboardPage({
@@ -39,6 +60,7 @@ export default async function DashboardPage({
     received?: string;
     created?: string;
     updated?: string;
+    nutrition?: string;
   }>;
 }) {
   if (!isAuthConfigured()) {
@@ -51,6 +73,7 @@ export default async function DashboardPage({
     received,
     created,
     updated,
+    nutrition,
   } = await searchParams;
   let storageReady = true;
   let connection = null;
@@ -74,6 +97,21 @@ export default async function DashboardPage({
       ? wahooMessages[result]
       : undefined;
   const automaticSyncEnabled = isWahooWebhookConfigured();
+  const today = new Date().toISOString().slice(0, 10);
+  let nutritionStorageReady = true;
+  let nutritionEntries: readonly NutritionEntry[] | null = null;
+  let todayNutrition: NutritionDaySummary | null = null;
+  try {
+    const [entries, daySummaries] = await Promise.all([
+      listNutritionEntries({ userId: user.id, limit: 10 }),
+      getNutritionDaySummaries({ userId: user.id, from: today, to: today }),
+    ]);
+    nutritionEntries = entries;
+    todayNutrition = daySummaries[0] ?? null;
+  } catch {
+    nutritionStorageReady = false;
+  }
+  const nutritionNotice = nutrition ? nutritionMessages[nutrition] : undefined;
 
   return (
     <main className="account-page">
@@ -87,9 +125,9 @@ export default async function DashboardPage({
           </p>
         </div>
         <UserButton />
-        {notice ? (
+        {nutritionNotice ?? notice ? (
           <p className="account-notice" role="status">
-            {notice}
+            {nutritionNotice ?? notice}
           </p>
         ) : null}
         <div className="account-empty">
@@ -146,6 +184,95 @@ export default async function DashboardPage({
                   <p className="account-setup">Integration storage is not configured yet.</p>
                 )}
               </>
+            )}
+          </div>
+        </div>
+        <div className="account-empty nutrition-section">
+          <span>02</span>
+          <div>
+            <h2>Nutrition</h2>
+            <p>
+              Log meals manually, then let connected AI assistants read daily calories and macros through TRAPEAK MCP.
+            </p>
+            {nutritionStorageReady ? (
+              <>
+                {todayNutrition ? (
+                  <div className="nutrition-summary" aria-label="Today's nutrition totals">
+                    <b>{todayNutrition.caloriesKilocalories} kcal</b>
+                    <span>{todayNutrition.proteinGrams} g protein</span>
+                    <span>{todayNutrition.carbohydratesGrams} g carbs</span>
+                    <span>{todayNutrition.fatGrams} g fat</span>
+                  </div>
+                ) : (
+                  <p className="account-sync-status">No meals logged today.</p>
+                )}
+                <form className="nutrition-form" action="/api/nutrition" method="post">
+                  <label>
+                    Meal
+                    <select name="mealType" defaultValue="lunch" required>
+                      <option value="breakfast">Breakfast</option>
+                      <option value="lunch">Lunch</option>
+                      <option value="dinner">Dinner</option>
+                      <option value="snack">Snack</option>
+                    </select>
+                  </label>
+                  <label className="nutrition-wide">
+                    Food or meal
+                    <input name="title" maxLength={120} placeholder="Rice and chicken" required />
+                  </label>
+                  <label>
+                    Consumed at (UTC)
+                    <input
+                      name="consumedAt"
+                      type="datetime-local"
+                      defaultValue={new Date().toISOString().slice(0, 16)}
+                      required
+                    />
+                  </label>
+                  <label>
+                    Calories
+                    <input name="caloriesKilocalories" type="number" min="0" max="20000" step="0.1" required />
+                  </label>
+                  <label>
+                    Protein (g)
+                    <input name="proteinGrams" type="number" min="0" max="2000" step="0.1" required />
+                  </label>
+                  <label>
+                    Carbs (g)
+                    <input name="carbohydratesGrams" type="number" min="0" max="2000" step="0.1" required />
+                  </label>
+                  <label>
+                    Fat (g)
+                    <input name="fatGrams" type="number" min="0" max="2000" step="0.1" required />
+                  </label>
+                  <label className="nutrition-wide">
+                    Notes (optional)
+                    <textarea name="notes" maxLength={1000} rows={3} />
+                  </label>
+                  <button className="button black" type="submit">Save meal</button>
+                </form>
+                {nutritionEntries && nutritionEntries.length > 0 ? (
+                  <div className="nutrition-list">
+                    <h3>Recent entries</h3>
+                    {nutritionEntries.map((entry) => (
+                      <article key={entry.id}>
+                        <div>
+                          <b>{entry.title}</b>
+                          <small>{entry.mealType} · {formatNutritionTime(entry.consumedAt)}</small>
+                          <span>
+                            {entry.caloriesKilocalories} kcal · P {entry.proteinGrams} g · C {entry.carbohydratesGrams} g · F {entry.fatGrams} g
+                          </span>
+                        </div>
+                        <form action={`/api/nutrition/${entry.id}/delete`} method="post">
+                          <button type="submit">Delete</button>
+                        </form>
+                      </article>
+                    ))}
+                  </div>
+                ) : null}
+              </>
+            ) : (
+              <p className="account-setup">Run the Nutrition database migration to enable meal logging.</p>
             )}
           </div>
         </div>

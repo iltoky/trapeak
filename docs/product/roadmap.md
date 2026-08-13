@@ -6,8 +6,10 @@
 | 1. Auth + Wahoo connection | Безопасное подключение и отключение аккаунта Wahoo | Done |
 | 2. Wahoo workout ingestion | Профиль и первая страница завершённых Wahoo-тренировок в БД TRAPEAK | Done |
 | 3. MCP | Read-only доступ Claude и ChatGPT к данным пользователя | Done |
-| 4. Automatic ingestion | Wahoo workout summary webhooks без дублей | In progress |
-| 5. Public distribution | Публикация TRAPEAK в каталоге ChatGPT и Codex | In progress |
+| 4. Automatic ingestion | Wahoo workout summary webhooks без дублей | Published; configuration pending |
+| 5. Nutrition | Ручной журнал питания, дневные итоги и read-only MCP | In progress |
+| 6. Labs / Blood Tests | Структурированные лабораторные показатели и история | Backlog |
+| Public distribution | Публикация TRAPEAK в каталоге ChatGPT и Codex | Paused by product decision |
 | После MVP | Garmin после API approval, recovery и другие health-источники | Backlog |
 
 ## Wahoo и Open Wearables
@@ -23,3 +25,5 @@ OAuth-задача Wahoo описана в [`TRP-011`](../../tasks/TRP-011-wahoo
 Первый remote MCP описан в [`TRP-013`](../../tasks/TRP-013-read-only-mcp.md). Он использует существующую Clerk identity через OAuth 2.1 и не вводит отдельные API keys или собственную систему аккаунтов.
 
 Автоматическая синхронизация описана в [`TRP-014`](../../tasks/TRP-014-wahoo-webhooks.md), публичная подача OpenAI — в [`TRP-015`](../../tasks/TRP-015-public-openai-plugin.md).
+
+Следующие продуктовые этапы: Nutrition в [`TRP-016`](../../tasks/TRP-016-nutrition.md), затем Labs / Blood Tests в [`TRP-017`](../../tasks/TRP-017-labs.md). Публичная подача OpenAI остаётся подготовленной, но не запускается до отдельного решения владельца продукта.

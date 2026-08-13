@@ -1,6 +1,6 @@
 {
   "name": "trapeak",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -10,7 +10,7 @@
     "start": "next start",
     "lint": "tsc --noEmit",
     "typecheck": "tsc --noEmit",
-    "test": "node --test --experimental-strip-types lib/db/**/*.test.ts lib/integrations/*.test.ts lib/integrations/**/*.test.ts lib/mcp/**/*.test.ts lib/security/**/*.test.ts"
+    "test": "node --test --experimental-strip-types lib/db/**/*.test.ts lib/integrations/*.test.ts lib/integrations/**/*.test.ts lib/mcp/**/*.test.ts lib/nutrition/**/*.test.ts lib/security/**/*.test.ts"
   },
   "dependencies": {
     "@clerk/mcp-tools": "^0.6.0",
