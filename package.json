@@ -1,6 +1,6 @@
 {
   "name": "trapeak",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "type": "module",
   "scripts": {
@@ -9,7 +9,7 @@
     "start": "next start",
     "lint": "tsc --noEmit",
     "typecheck": "tsc --noEmit",
-    "test": "node --test --experimental-strip-types lib/integrations/*.test.ts"
+    "test": "node --test --experimental-strip-types lib/integrations/*.test.ts lib/integrations/**/*.test.ts"
   },
   "dependencies": {
     "@clerk/nextjs": "^7.7.4",

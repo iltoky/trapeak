@@ -2,16 +2,18 @@
 
 | Этап | Результат | Статус |
 |---|---|---|
-| 0. Architecture audit | Решение `partial reuse` по Open Wearables зафиксировано; остаются решения по auth, deployment и финальному стеку | In progress |
-| 1. Auth + Garmin connection | Безопасное подключение аккаунта Garmin | Planned |
-| 2. Workout ingestion | История и новые тренировки в БД TRAPEAK | Planned |
+| 0. Product foundation | Лендинг, Clerk auth, dashboard и provider-neutral adapter boundary | Done |
+| 1. Auth + Wahoo connection | Безопасное подключение и отключение аккаунта Wahoo | In progress |
+| 2. Wahoo workout ingestion | История и новые Wahoo-тренировки в БД TRAPEAK | Planned |
 | 3. MCP | Доступ Claude и ChatGPT к данным пользователя | Planned |
-| После MVP | Recovery, другие wearable- и health-источники | Backlog |
+| После MVP | Garmin после API approval, recovery и другие health-источники | Backlog |
 
-## Open Wearables
+## Wahoo и Open Wearables
 
-Аудит Open Wearables завершён. Принято решение `partial reuse`: использовать Open Wearables как закрытый внутренний слой Garmin-ingestion и нормализации, сохранив собственные auth, публичный API и remote MCP в TRAPEAK.
+Wahoo подключается напрямую через Wahoo Cloud API и общий server-only provider adapter. Это текущий путь MVP.
+
+Аудит Open Wearables завершён. Решение `partial reuse` сохраняется для будущего Garmin-ingestion после получения официального доступа. Собственные auth, публичный API и remote MCP остаются в TRAPEAK.
 
 Условия использования, обязательные меры безопасности и критерии PoC зафиксированы в [ADR-0001](../architecture/adr/0001-open-wearables.md). Production-использование зависит от успешного выполнения PoC и требований безопасности из ADR.
 
-Подробная декомпозиция первого этапа находится в [`tasks/stage-1-auth-and-garmin`](../../tasks/stage-1-auth-and-garmin/README.md).
+Текущая задача Wahoo описана в [`TRP-011`](../../tasks/TRP-011-wahoo-oauth.md). Историческая декомпозиция Garmin сохранена в [`tasks/stage-1-auth-and-garmin`](../../tasks/stage-1-auth-and-garmin/README.md) и возобновится после API approval.

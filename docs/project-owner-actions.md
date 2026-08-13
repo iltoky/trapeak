@@ -7,22 +7,23 @@
 - Домен продукта: `trapeak.com`.
 - Итоговый технический стек должен проверить, обосновать и зафиксировать Claude в TRP-001 через ADR.
 - Приоритет MVP: самое быстрое и простое решение без создания собственной auth/session-инфраструктуры.
+- Первая fitness-интеграция: Wahoo; Garmin отображается как `soon` до получения API-доступа.
 
 ## Нужно сейчас
 
-1. Создать Clerk application для TRAPEAK или установить Clerk через Vercel Marketplace.
-2. В Clerk включить email + password, email verification и password reset; social login для MVP не включать.
-3. Добавить Clerk keys в Development, Preview и Production environment Vercel.
-4. Дождаться результатов заявок Wahoo и Suunto; Garmin остаётся отложенным до возобновления программы.
+1. Добавить `WAHOO_CLIENT_ID` и `WAHOO_CLIENT_SECRET` в Preview environment Vercel после появления callback route.
+2. Зарегистрировать выданный callback URL в Wahoo Developer Portal.
+3. Выполнить реальное тестовое подключение Wahoo в Preview.
+4. Garmin оставить отложенным до возобновления программы и получения API-доступа.
 
-## Потребуется после одобрения первого провайдера
+## Для Wahoo integration
 
-- предоставить разработчику доступ к документации Developer Portal без публикации закрытых материалов;
-- создать production application/окружение провайдера;
-- зарегистрировать callback URL для используемых окружений, включая production на домене `trapeak.com`;
+- создать production application/окружение Wahoo;
+- зарегистрировать callback URL для Preview, а перед релизом — production callback на домене `trapeak.com`;
 - безопасно добавить provider client credentials в secrets окружения;
-- передать подтверждённые scopes, token, revoke, rate-limit и branding requirements;
 - выполнить реальное тестовое подключение в evaluation environment.
+
+Client secret и пользовательские токены нельзя передавать в сообщениях: они добавляются только в secrets соответствующего окружения.
 
 ## Потребуется перед production-запуском
 
