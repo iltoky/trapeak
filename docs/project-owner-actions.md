@@ -37,6 +37,13 @@
 2. В Wahoo Developer Portal указать URL `https://trapeak.com/api/integrations/wahoo/webhook`, тот же token и включить webhook.
 3. После deployment создать или обновить тестовую тренировку.
 
+## Нужно сейчас для Nutrition
+
+1. [x] Применить production migration `0003_nutrition.sql`.
+2. Войти в `https://trapeak.com/dashboard`, создать тестовый meal и удалить его.
+3. Обновить schema или переподключить TRAPEAK в ChatGPT Developer mode.
+4. Вызвать `list_nutrition_entries` и `get_nutrition_summary`.
+
 ## Нужно для публичного плагина OpenAI
 
 1. Выбрать publisher: верифицированное физическое лицо или компания.

@@ -7,7 +7,7 @@
 | 2. Wahoo workout ingestion | Профиль и первая страница завершённых Wahoo-тренировок в БД TRAPEAK | Done |
 | 3. MCP | Read-only доступ Claude и ChatGPT к данным пользователя | Done |
 | 4. Automatic ingestion | Wahoo workout summary webhooks без дублей | Published; configuration pending |
-| 5. Nutrition | Ручной журнал питания, дневные итоги и read-only MCP | In progress |
+| 5. Nutrition | Ручной журнал питания, дневные итоги и read-only MCP | Published; authenticated e2e pending |
 | 6. Labs / Blood Tests | Структурированные лабораторные показатели и история | Backlog |
 | Public distribution | Публикация TRAPEAK в каталоге ChatGPT и Codex | Paused by product decision |
 | После MVP | Garmin после API approval, recovery и другие health-источники | Backlog |

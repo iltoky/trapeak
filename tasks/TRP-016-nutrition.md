@@ -1,6 +1,6 @@
 # TRP-016 — Nutrition journal and MCP
 
-Статус: **In progress**
+Статус: **Published; authenticated e2e pending**
 
 ## Описание
 
@@ -17,9 +17,10 @@
 
 ## Release actions
 
-1. Применить `0003_nutrition.sql` к production БД до публикации кода.
-2. Проверить ручное добавление и удаление записи в production dashboard.
-3. В developer-mode клиенте вызвать оба новых MCP-инструмента.
+1. [x] Применить `0003_nutrition.sql` к production БД до публикации кода.
+2. [x] Опубликовать commit `606369e6c481586388a32df147c4af1c96906fd1` и дождаться Vercel `READY`.
+3. Проверить ручное добавление и удаление записи в production dashboard.
+4. Обновить schema или переподключить TRAPEAK в developer-mode клиенте и вызвать оба новых MCP-инструмента.
 
 ## QA e2e tests
 
