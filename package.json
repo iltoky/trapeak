@@ -1,11 +1,11 @@
 {
   "name": "trapeak",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "private": true,
   "type": "module",
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "npm run db:migrate && next build",
     "db:migrate": "node --env-file-if-exists=.env.local scripts/migrate.mjs",
     "start": "next start",
     "lint": "tsc --noEmit",
