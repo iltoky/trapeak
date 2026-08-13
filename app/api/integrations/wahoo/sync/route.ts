@@ -11,12 +11,18 @@ export const dynamic = "force-dynamic";
 function dashboardRedirect(
   appUrl: URL,
   result: string,
-  count?: number,
+  counts?: Readonly<{
+    received: number;
+    created: number;
+    updated: number;
+  }>,
 ): Response {
   const url = new URL("/dashboard", appUrl);
   url.searchParams.set("wahoo", result);
-  if (count !== undefined) {
-    url.searchParams.set("count", String(count));
+  if (counts) {
+    url.searchParams.set("received", String(counts.received));
+    url.searchParams.set("created", String(counts.created));
+    url.searchParams.set("updated", String(counts.updated));
   }
   return Response.redirect(url, 303);
 }
@@ -44,7 +50,11 @@ export async function POST(request: Request) {
 
   try {
     const result = await syncWahooData(user.id);
-    return dashboardRedirect(appUrl, "synced", result.importedCount);
+    return dashboardRedirect(appUrl, "synced", {
+      received: result.importedCount,
+      created: result.createdCount,
+      updated: result.updatedCount,
+    });
   } catch (error) {
     if (error instanceof WahooNotConnectedError) {
       return dashboardRedirect(appUrl, "not_connected");

@@ -48,4 +48,6 @@ WAHOO_CLIENT_SECRET=
 - ключ шифрования хранится отдельно от БД;
 - authorization code и токены не логируются;
 - raw OAuth responses не сохраняются;
+- MCP clients не получают provider tokens, raw payload, Clerk user ID или provider user ID;
+- MCP activity lookup всегда ограничен `user_id`, полученным из проверенного OAuth token;
 - удаление аккаунта, отключение Wahoo и удаление тренировок — разные операции.

@@ -1,5 +1,7 @@
 # TRP-012 — Wahoo workout ingestion
 
+Статус: **Done**
+
 ## Описание
 
 Получать разрешённые Wahoo profile/workout data на сервере, сохранять исходные records и нормализованные поля для будущего read-only MCP. Первый вертикальный срез — ручная идемпотентная синхронизация 30 последних workout records из dashboard.
@@ -32,9 +34,11 @@
 
 ## QA e2e tests
 
-1. Открыть dashboard с уже подключённым Wahoo.
-2. Нажать `Sync Wahoo data` и дождаться success notice.
-3. Проверить profile, sync state и число завершённых activities в БД.
-4. Повторить sync и убедиться, что число записей не удвоилось.
-5. Проверить sync после истечения access token.
-6. Отключить и повторно подключить Wahoo, затем снова выполнить sync.
+1. [x] Открыть dashboard с уже подключённым Wahoo.
+2. [x] Нажать `Sync Wahoo data` и дождаться success notice.
+3. [x] Проверить profile, sync state и число завершённых activities в БД.
+4. [x] Повторить sync и убедиться, что число записей не удвоилось.
+5. [x] Проверить refresh истёкшего access token в автоматическом тесте.
+6. [x] Отключить и повторно подключить Wahoo, затем снова выполнить sync.
+
+Production-проверка завершена 13 августа 2026 года: Wahoo вернул две активности, в `fitness_activities` сохранились две уникальные записи, duplicate groups — `0`.

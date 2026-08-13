@@ -17,6 +17,8 @@ import {
 export type WahooSyncResult = Readonly<{
   importedCount: number;
   providerTotal: number;
+  createdCount: number;
+  updatedCount: number;
 }>;
 
 async function recordSyncError(userId: string, errorCode: string): Promise<void> {
@@ -36,7 +38,7 @@ export async function syncWahooData(userId: string): Promise<WahooSyncResult> {
       adapter.getProfile(tokens),
       adapter.listActivities(tokens, { page: 1, perPage: 30 }),
     ]);
-    await saveProviderSnapshot({
+    const saved = await saveProviderSnapshot({
       userId,
       provider: "wahoo",
       profile,
@@ -46,6 +48,8 @@ export async function syncWahooData(userId: string): Promise<WahooSyncResult> {
     return {
       importedCount: activityPage.activities.length,
       providerTotal: activityPage.total,
+      createdCount: saved.createdCount,
+      updatedCount: saved.updatedCount,
     };
   } catch (error) {
     if (error instanceof WahooApiError && [401, 403].includes(error.status)) {

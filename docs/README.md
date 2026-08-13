@@ -13,6 +13,7 @@
 - [Обзор](architecture/overview.md)
 - [Данные и секреты](architecture/data-and-secrets.md)
 - [Интеграция Wahoo](architecture/wahoo-integration.md)
+- [Remote MCP](architecture/mcp.md)
 - [Интеграция Garmin — planned](architecture/garmin-integration.md)
 - [ADR](architecture/adr/README.md)
 

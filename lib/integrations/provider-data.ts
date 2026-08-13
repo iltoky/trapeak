@@ -16,6 +16,12 @@ export type ProviderDataSummary = Readonly<{
   storedActivityCount: number;
 }>;
 
+export type ProviderSnapshotResult = Readonly<{
+  receivedCount: number;
+  createdCount: number;
+  updatedCount: number;
+}>;
+
 type ProviderDataSummaryRow = Readonly<{
   last_synced_at: string | Date;
   provider_total: number | string;
@@ -23,14 +29,32 @@ type ProviderDataSummaryRow = Readonly<{
   stored_activity_count: number | string;
 }>;
 
+type ExistingActivityRow = Readonly<{
+  provider_activity_id: string;
+}>;
+
 export async function saveProviderSnapshot(input: Readonly<{
   userId: string;
   provider: ProviderId;
   profile: ProviderAthleteProfile;
   activityPage: ProviderActivityPage;
-}>): Promise<void> {
+}>): Promise<ProviderSnapshotResult> {
   const sql = getDatabase();
   const profilePayload = JSON.stringify(input.profile.rawData);
+  const existingRows = await sql`
+    SELECT provider_activity_id
+      FROM fitness_activities
+     WHERE user_id = ${input.userId}
+       AND provider = ${input.provider}
+  ` as ExistingActivityRow[];
+  const existingActivityIds = new Set(
+    existingRows.map(({ provider_activity_id }) => provider_activity_id),
+  );
+  const updatedCount = input.activityPage.activities.reduce(
+    (count, activity) =>
+      count + Number(existingActivityIds.has(activity.providerActivityId)),
+    0,
+  );
 
   await sql.transaction((transaction) => [
     transaction`
@@ -136,6 +160,12 @@ export async function saveProviderSnapshot(input: Readonly<{
         updated_at = NOW()
     `,
   ]);
+
+  return {
+    receivedCount: input.activityPage.activities.length,
+    createdCount: input.activityPage.activities.length - updatedCount,
+    updatedCount,
+  };
 }
 
 export async function markProviderSyncError(

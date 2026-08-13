@@ -33,14 +33,24 @@ function formatSyncTime(value: Date): string {
 export default async function DashboardPage({
   searchParams,
 }: {
-  searchParams: Promise<{ wahoo?: string; count?: string }>;
+  searchParams: Promise<{
+    wahoo?: string;
+    received?: string;
+    created?: string;
+    updated?: string;
+  }>;
 }) {
   if (!isAuthConfigured()) {
     redirect("/sign-in?setup=required");
   }
 
   const user = await requireAuthUser();
-  const { wahoo: result, count } = await searchParams;
+  const {
+    wahoo: result,
+    received,
+    created,
+    updated,
+  } = await searchParams;
   let storageReady = true;
   let connection = null;
   try {
@@ -58,7 +68,7 @@ export default async function DashboardPage({
     }
   }
   const notice = result === "synced"
-    ? `Wahoo synchronized successfully. ${Number(count) || 0} completed workouts received.`
+    ? `Wahoo synchronized successfully. ${Number(received) || 0} received; ${Number(created) || 0} new; ${Number(updated) || 0} updated; ${dataSummary?.storedActivityCount ?? 0} stored.`
     : result
       ? wahooMessages[result]
       : undefined;

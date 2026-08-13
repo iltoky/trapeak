@@ -11,7 +11,8 @@ flowchart TD
     B --> DB["PostgreSQL"]
     B --> P["Provider adapters"]
     P --> G["Garmin / Suunto / Wahoo APIs"]
-    M["MCP clients"] --> B
+    M["ChatGPT / Claude"] --> O["Clerk OAuth 2.1"]
+    O --> B
 ```
 
 ## Архитектурные ограничения первого этапа
@@ -22,6 +23,8 @@ flowchart TD
 - Garmin, Suunto и Wahoo изолируются единым adapter/service-контрактом;
 - секреты не попадают в Git, URL, frontend state и логи;
 - все пользовательские запросы проверяют владельца ресурса;
+- MCP identity извлекается только из проверенного Clerk OAuth token;
+- remote MCP предоставляет read-only нормализованные данные и не возвращает raw provider payload;
 - реальные вызовы провайдеров заменяются mock/fake в автоматических тестах.
 
 Пользовательская identity и сессии реализуются через Clerk. Доменный код получает только внутренний `AuthUser` и не импортирует Clerk. Реальные provider adapters добавляются после выдачи credentials; registry по умолчанию пуст и закрывается ошибкой для ненастроенного провайдера.

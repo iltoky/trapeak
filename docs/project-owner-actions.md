@@ -17,13 +17,21 @@
 4. Первая миграция `provider_connections` применена.
 5. Реальное подключение Wahoo успешно проверено владельцем проекта 13 августа 2026 года.
 
-## Нужно сейчас
+## Выполнено в Production
 
-1. В Wahoo Developer Portal заменить callback на `https://trapeak.com/api/integrations/wahoo/callback`.
-2. В Vercel добавить Wahoo и token encryption secrets в Production environment; `APP_URL` для Production должен быть `https://trapeak.com`. Neon предоставляет приложению `POSTGRES_URL`, поэтому отдельный `DATABASE_URL` не требуется.
-3. После этого агент применяет `db/migrations/0002_provider_data.sql`, публикует код через подключённый GitHub App и выполняет production smoke test.
-4. В production выполнить первое подключение/синхронизацию Wahoo и проверить отсутствие дублей повторным sync.
-5. Garmin оставить отложенным до возобновления программы и получения API-доступа.
+1. Wahoo production callback и secrets настроены.
+2. Миграции `provider_connections` и provider data применены.
+3. Production OAuth, disconnect/reconnect и синхронизация Wahoo проверены.
+4. Повторный sync двух тренировок не создал дублей.
+
+## Нужно сейчас для MCP
+
+1. В production instance Clerk открыть `OAuth applications`.
+2. Для первого developer-mode теста включить `Dynamic client registration`.
+3. Установить default scopes: `openid`, `profile`.
+4. После production deployment подключить `https://trapeak.com/mcp` в ChatGPT Developer mode и завершить OAuth flow.
+
+Dynamic Client Registration используется для быстрого MVP-теста. Перед публичным запуском нужно перейти на review-based CIMD/pre-registered clients или другой ограниченный OAuth client registration flow.
 
 ## Для Wahoo integration
 
