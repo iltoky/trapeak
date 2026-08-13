@@ -8,6 +8,7 @@ import { NextResponse } from "next/server";
 const isProtectedRoute = createRouteMatcher([
   "/dashboard(.*)",
   "/api/me(.*)",
+  "/api/integrations(.*)",
 ]);
 
 const authConfigured = Boolean(
@@ -39,7 +40,10 @@ export function proxy(request: NextRequest, event: NextFetchEvent) {
       );
     }
 
-    if (request.nextUrl.pathname.startsWith("/api/me")) {
+    if (
+      request.nextUrl.pathname.startsWith("/api/me") ||
+      request.nextUrl.pathname.startsWith("/api/integrations")
+    ) {
       return Response.json(
         { error: "Authentication is not configured" },
         { status: 503 },

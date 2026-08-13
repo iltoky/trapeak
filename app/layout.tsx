@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { ClerkProvider } from "@clerk/nextjs";
 import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { isAuthConfigured } from "@/lib/auth/config";
 import "./globals.css";
@@ -45,6 +46,7 @@ export default function RootLayout({
     <>
       {children}
       <Analytics />
+      <SpeedInsights />
     </>
   );
 

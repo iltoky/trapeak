@@ -1,6 +1,8 @@
 # Задачи TRAPEAK
 
 - [TRP-000 — публичный лендинг TRAPEAK](TRP-000-public-landing-page.md)
-- [Этап 1 — авторизация и подключение Garmin](stage-1-auth-and-garmin/README.md)
+- [TRP-011 — Wahoo OAuth и подключение](TRP-011-wahoo-oauth.md)
+- [TRP-012 — Wahoo workout ingestion](TRP-012-wahoo-ingestion.md)
+- [Этап 1 — авторизация и подключение Garmin (будущий этап)](stage-1-auth-and-garmin/README.md)
 
-Нумерация отражает рекомендуемый порядок. Каждая задача — отдельный PR. Организационные задачи отмечены отдельно и не поручаются Claude как разработка.
+Текущая разработка ведётся напрямую в `main` с обязательными typecheck, tests и production build перед публикацией. Дополнительные постоянные рабочие ветки не создаются. Старые Garmin-задачи сохранены и возобновятся после получения API-доступа.

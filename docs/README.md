@@ -12,11 +12,13 @@
 
 - [Обзор](architecture/overview.md)
 - [Данные и секреты](architecture/data-and-secrets.md)
-- [Интеграция Garmin](architecture/garmin-integration.md)
+- [Интеграция Wahoo](architecture/wahoo-integration.md)
+- [Интеграция Garmin — planned](architecture/garmin-integration.md)
 - [ADR](architecture/adr/README.md)
 
 ## Разработка
 
 - [Правила выполнения задач](development/task-workflow.md)
+- [Процесс подготовки и публикации релизов](development/release-workflow.md)
+- [История релизов](releases/README.md)
 - [Что требуется от владельца проекта](project-owner-actions.md)
-
