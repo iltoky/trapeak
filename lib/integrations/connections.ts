@@ -77,33 +77,42 @@ export async function saveProviderConnection(input: Readonly<{
     : null;
 
   try {
-    const rows = await sql`
-      INSERT INTO provider_connections (
-        id, user_id, provider, provider_user_id, provider_display_name,
-        status, access_token_ciphertext, refresh_token_ciphertext,
-        token_expires_at, scopes, disconnected_at, last_error_code
-      ) VALUES (
-        ${randomUUID()}, ${input.userId}, ${input.provider},
-        ${input.account.providerUserId}, ${input.account.displayName ?? null},
-        'connected', ${accessToken}, ${refreshToken},
-        ${input.tokens.expiresAt?.toISOString() ?? null},
-        ${input.tokens.scopes}, NULL, NULL
-      )
-      ON CONFLICT (user_id, provider) DO UPDATE SET
-        provider_user_id = EXCLUDED.provider_user_id,
-        provider_display_name = EXCLUDED.provider_display_name,
-        status = 'connected',
-        access_token_ciphertext = EXCLUDED.access_token_ciphertext,
-        refresh_token_ciphertext = EXCLUDED.refresh_token_ciphertext,
-        token_expires_at = EXCLUDED.token_expires_at,
-        scopes = EXCLUDED.scopes,
-        disconnected_at = NULL,
-        last_error_code = NULL,
-        updated_at = NOW()
-      WHERE provider_connections.provider_user_id = EXCLUDED.provider_user_id
-         OR provider_connections.status = 'disconnected'
-      RETURNING id
-    `;
+    const [, rows] = await sql.transaction((transaction) => [
+      transaction`
+        DELETE FROM provider_connections
+         WHERE provider = ${input.provider}
+           AND provider_user_id = ${input.account.providerUserId}
+           AND user_id <> ${input.userId}
+           AND status = 'disconnected'
+      `,
+      transaction`
+        INSERT INTO provider_connections (
+          id, user_id, provider, provider_user_id, provider_display_name,
+          status, access_token_ciphertext, refresh_token_ciphertext,
+          token_expires_at, scopes, disconnected_at, last_error_code
+        ) VALUES (
+          ${randomUUID()}, ${input.userId}, ${input.provider},
+          ${input.account.providerUserId}, ${input.account.displayName ?? null},
+          'connected', ${accessToken}, ${refreshToken},
+          ${input.tokens.expiresAt?.toISOString() ?? null},
+          ${input.tokens.scopes}, NULL, NULL
+        )
+        ON CONFLICT (user_id, provider) DO UPDATE SET
+          provider_user_id = EXCLUDED.provider_user_id,
+          provider_display_name = EXCLUDED.provider_display_name,
+          status = 'connected',
+          access_token_ciphertext = EXCLUDED.access_token_ciphertext,
+          refresh_token_ciphertext = EXCLUDED.refresh_token_ciphertext,
+          token_expires_at = EXCLUDED.token_expires_at,
+          scopes = EXCLUDED.scopes,
+          disconnected_at = NULL,
+          last_error_code = NULL,
+          updated_at = NOW()
+        WHERE provider_connections.provider_user_id = EXCLUDED.provider_user_id
+           OR provider_connections.status = 'disconnected'
+        RETURNING id
+      `,
+    ]);
 
     if (rows.length !== 1) {
       throw new ProviderAccountAlreadyLinkedError();
