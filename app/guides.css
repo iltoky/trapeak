@@ -303,6 +303,11 @@ body > main:not(.legal) > footer.shell {
   padding-left: 30px;
 }
 
+.related-grid a:nth-child(3n + 1) {
+  border-left: 0;
+  padding-left: 0;
+}
+
 .related-grid b {
   font-weight: 400;
 }

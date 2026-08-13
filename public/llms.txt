@@ -2,12 +2,15 @@
 
 TRAPEAK is developing a secure, user-specific data layer that is intended to make user-authorized fitness and wearable data available to MCP-compatible AI clients.
 
-Product status: pre-launch and in development. No wearable integration is publicly available. Garmin is the first planned integration and remains subject to Garmin review and approval. TRAPEAK is not currently an official Garmin partner.
+Product status: pre-launch and in development. No wearable integration is publicly available. Wahoo API access is approved and the first connection is being built. Garmin remains planned and is pending provider API approval.
 
 ## Core pages
 
 - https://trapeak.com/ — Product overview and current development status
 - https://trapeak.com/ai-guides — Index of practical AI guides
+- https://trapeak.com/wahoo-to-chatgpt — Wahoo-to-ChatGPT workflow in development
+- https://trapeak.com/wahoo-to-claude — Wahoo-to-Claude MCP workflow in development
+- https://trapeak.com/wahoo-mcp — Planned read-only Wahoo MCP design
 - https://trapeak.com/garmin-to-chatgpt — Planned Garmin-to-ChatGPT workflow
 - https://trapeak.com/garmin-to-claude — Planned Garmin-to-Claude MCP workflow
 - https://trapeak.com/garmin-mcp — Planned read-only Garmin MCP design

@@ -19,6 +19,7 @@ export default function GarminMcpPage() {
     title="A personal Garmin MCP connection."
     intro="TRAPEAK is developing a remote MCP server intended to expose user-authorized Garmin activity data to compatible AI clients. It is read-only by design for the MVP and is not yet available."
     summary="The planned Garmin MCP is a controlled interface: the AI requests a specific activity or time range, and TRAPEAK returns only the authorized data for that user."
+    statusLabel="PLANNED"
     status="Garmin access is pending review. Tool names and available fields remain provisional until the provider integration is approved and validated."
     steps={[
       { title: "Identify the user", description: "Every MCP request is designed to be tied to an authenticated TRAPEAK user rather than a shared global API key." },
@@ -29,6 +30,7 @@ export default function GarminMcpPage() {
     dataIntro="The exact tool contract will be finalized during the MVP. The current plan prioritizes a small, clear read-only surface."
     dataPoints={["List activities by date range and sport", "Retrieve one activity with summaries and laps", "Compare activity metrics across a selected period", "Return data only for the authenticated owner"]}
     prompts={["Get my running activities from the last 30 days.", "Show the laps and heart-rate summary for yesterday's run.", "Compare weekly distance over the last eight weeks."]}
+    sourceNote="Garmin remains a planned source and is subject to provider approval."
     faqs={[
       { question: "Is there a public Garmin MCP endpoint now?", answer: "No. TRAPEAK MCP is in development. Production access depends on completion of the product and approval of the Garmin integration." },
       { question: "Is this Garmin's official MCP server?", answer: "No. TRAPEAK is an independent product and is not currently an official Garmin partner. Garmin does not operate or endorse the planned TRAPEAK MCP." },

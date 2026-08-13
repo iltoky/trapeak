@@ -19,6 +19,7 @@ export default function GarminToClaudePage() {
     title="Give Claude your training context."
     intro="TRAPEAK plans to connect user-authorized Garmin activity data to Claude through a remote, user-specific MCP connection. The feature is in development, and Garmin availability depends on provider approval."
     summary="Instead of exporting FIT files for every conversation, the planned MCP connection lets Claude request the relevant parts of your authorized training history."
+    statusLabel="PLANNED"
     status="The connection described here is a product plan, not a currently available integration. TRAPEAK has no official partnership with Garmin or Anthropic."
     steps={[
       { title: "Approve the source", description: "After release, authorize Garmin through its official consent flow. Access is intended to be read-only and revocable." },
@@ -29,6 +30,7 @@ export default function GarminToClaudePage() {
     dataIntro="TRAPEAK is designed to normalize approved activity data before presenting it to an AI client. Planned coverage begins with running and cycling."
     dataPoints={["Completed activities and basic summaries", "Distance, duration, pace or speed and heart-rate data where available", "Activity laps and detailed samples when permitted", "A consistent format designed for later wearable sources"]}
     prompts={["Explain the trend across my last month of runs.", "Compare my easy runs at a similar pace.", "Which workout changed my weekly load the most?"]}
+    sourceNote="Garmin remains a planned source and is subject to provider approval."
     faqs={[
       { question: "Does Claude connect directly to Garmin?", answer: "Not through TRAPEAK. The planned architecture has TRAPEAK obtain user-authorized data from Garmin and expose only the requested data through a personal MCP connection." },
       { question: "Is the Garmin-to-Claude connection available now?", answer: "No. It is in development and depends on Garmin approval as well as compatibility with the Claude client used by the user." },

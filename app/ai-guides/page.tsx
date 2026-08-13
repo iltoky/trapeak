@@ -10,10 +10,13 @@ export const metadata: Metadata = {
 };
 
 const guides = [
+  { href: "/wahoo-to-chatgpt", label: "Wahoo to ChatGPT", description: "How the Wahoo connection in development is intended to bring authorized workout data into ChatGPT." },
+  { href: "/wahoo-to-claude", label: "Wahoo to Claude", description: "How Claude could use authorized Wahoo workout data through a personal TRAPEAK MCP connection." },
+  { href: "/wahoo-mcp", label: "Wahoo MCP", description: "The planned read-only MCP layer for querying user-authorized Wahoo workout data." },
   { href: "/garmin-to-chatgpt", label: "Garmin to ChatGPT", description: "How the planned connection is intended to bring authorized Garmin activity data into ChatGPT." },
   { href: "/garmin-to-claude", label: "Garmin to Claude", description: "How Claude could use authorized Garmin activity data through a personal TRAPEAK MCP connection." },
   { href: "/garmin-mcp", label: "Garmin MCP", description: "The planned read-only MCP layer for querying authorized Garmin activity data." },
-  { href: "/wearable-mcp", label: "Wearable MCP", description: "The roadmap for a permissioned data layer spanning Garmin and future wearable sources." },
+  { href: "/wearable-mcp", label: "Wearable MCP", description: "The roadmap for a permissioned data layer spanning Wahoo, Garmin and future wearable sources." },
 ];
 
 export default function AiGuidesPage() {
@@ -24,7 +27,7 @@ export default function AiGuidesPage() {
         <p className="guide-breadcrumb"><Link href="/">TRAPEAK</Link><span>/</span><strong>AI guides</strong></p>
         <div className="eyebrow"><span className="live-dot" /> Practical product guides</div>
         <h1>AI guides.</h1>
-        <p>Clear explanations of how TRAPEAK is intended to connect user-authorized fitness data with MCP-compatible AI assistants. Garmin is the first planned integration, subject to approval.</p>
+        <p>Clear explanations of how TRAPEAK is intended to connect user-authorized fitness data with MCP-compatible AI assistants. Wahoo is in development; Garmin remains planned pending API approval.</p>
       </section>
       <section className="guides-index-list shell" aria-label="AI guides">
         {guides.map((guide, index) => (
