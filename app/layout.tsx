@@ -23,10 +23,10 @@ export const metadata: Metadata = {
     default: "TRAPEAK — Fitness data infrastructure for AI",
     template: "%s | TRAPEAK",
   },
-  description: "TRAPEAK is developing a secure, user-specific MCP connection for authorized fitness data and compatible AI assistants. Wahoo API access is approved and the first connection is in development.",
+  description: "TRAPEAK private beta connects authorized Wahoo workouts, nutrition records, and laboratory results to compatible AI assistants through a secure personal MCP connection.",
   metadataBase: new URL("https://trapeak.com"),
   alternates: { canonical: "/" },
-  openGraph: { title: "TRAPEAK — Fitness data infrastructure for AI", description: "A secure MCP connection between authorized fitness data and the AI assistant a user chooses. The first Wahoo connection is in development.", url: "https://trapeak.com", siteName: "TRAPEAK", type: "website" },
+  openGraph: { title: "TRAPEAK — Fitness data infrastructure for AI", description: "A secure personal MCP connection for authorized fitness, nutrition, and laboratory data. Available in private beta with Wahoo.", url: "https://trapeak.com", siteName: "TRAPEAK", type: "website" },
   icons: {
     icon: [
       { url: "/brand/trapeak-app-icon.svg", type: "image/svg+xml" },

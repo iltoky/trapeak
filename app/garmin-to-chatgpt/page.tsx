@@ -17,7 +17,7 @@ export default function GarminToChatGPTPage() {
     slug="garmin-to-chatgpt"
     eyebrow="Garmin to ChatGPT"
     title="Bring Garmin context to ChatGPT."
-    intro="TRAPEAK is being built to let users authorize access to their Garmin activity data and make selected data available to ChatGPT through a personal MCP connection. The Garmin integration is not available yet and depends on Garmin approval."
+    intro="TRAPEAK plans to let users authorize Garmin activity data through its existing personal MCP connection. The Garmin integration is not available and depends on Garmin approval."
     summary="TRAPEAK plans to provide the secure data connection; ChatGPT remains the place where you ask questions and receive answers."
     statusLabel="PLANNED"
     status="Garmin API access has not yet been approved. TRAPEAK is not an official Garmin partner, and this connection is not currently available."
@@ -32,7 +32,7 @@ export default function GarminToChatGPTPage() {
     prompts={["Compare my last four runs and identify the biggest change.", "Was yesterday's heart rate unusual for that pace?", "Summarize my running volume over the last six weeks."]}
     sourceNote="Garmin remains a planned source and is subject to provider approval."
     faqs={[
-      { question: "Can I connect Garmin to ChatGPT through TRAPEAK today?", answer: "No. TRAPEAK is in development. The Garmin integration is planned and subject to Garmin review and approval." },
+      { question: "Can I connect Garmin to ChatGPT through TRAPEAK today?", answer: "No. TRAPEAK is live in private beta with Wahoo, while Garmin remains planned and subject to provider review and approval." },
       { question: "Is TRAPEAK affiliated with Garmin or OpenAI?", answer: "No. TRAPEAK is not currently an official Garmin partner and is not affiliated with OpenAI. Product and company names are used only to describe intended compatibility." },
       { question: "Will ChatGPT receive my Garmin password?", answer: "No. The planned flow uses provider authorization. TRAPEAK will not ask for or store your Garmin password, and the AI client will not receive provider credentials." },
       { question: "Who creates the answer?", answer: "ChatGPT creates the answer. TRAPEAK is designed to provide structured, authorized data and does not itself generate coaching or medical recommendations." },

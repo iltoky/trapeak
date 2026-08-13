@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "next dev",
-    "build": "npm run db:migrate && next build",
+    "build": "next build",
     "db:migrate": "node --env-file-if-exists=.env.local scripts/migrate.mjs",
     "start": "next start",
     "lint": "tsc --noEmit",

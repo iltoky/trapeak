@@ -17,7 +17,7 @@ export default function GarminToClaudePage() {
     slug="garmin-to-claude"
     eyebrow="Garmin to Claude"
     title="Give Claude your training context."
-    intro="TRAPEAK plans to connect user-authorized Garmin activity data to Claude through a remote, user-specific MCP connection. The feature is in development, and Garmin availability depends on provider approval."
+    intro="TRAPEAK plans to add user-authorized Garmin activity data to its remote, user-specific MCP connection. Garmin is not available and depends on provider approval."
     summary="Instead of exporting FIT files for every conversation, the planned MCP connection lets Claude request the relevant parts of your authorized training history."
     statusLabel="PLANNED"
     status="The connection described here is a product plan, not a currently available integration. TRAPEAK has no official partnership with Garmin or Anthropic."
@@ -33,7 +33,7 @@ export default function GarminToClaudePage() {
     sourceNote="Garmin remains a planned source and is subject to provider approval."
     faqs={[
       { question: "Does Claude connect directly to Garmin?", answer: "Not through TRAPEAK. The planned architecture has TRAPEAK obtain user-authorized data from Garmin and expose only the requested data through a personal MCP connection." },
-      { question: "Is the Garmin-to-Claude connection available now?", answer: "No. It is in development and depends on Garmin approval as well as compatibility with the Claude client used by the user." },
+      { question: "Is the Garmin-to-Claude connection available now?", answer: "No. Garmin depends on provider approval, as well as compatibility with the Claude client used by the user." },
       { question: "Can access be revoked?", answer: "That is a core product requirement. The planned controls allow users to disconnect their AI client, disconnect the fitness source, and request deletion of stored data." },
       { question: "Is TRAPEAK an official Garmin or Anthropic partner?", answer: "No. References to Garmin and Claude describe intended compatibility and do not imply endorsement, affiliation, or partnership." },
     ]}

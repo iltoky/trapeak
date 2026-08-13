@@ -17,7 +17,7 @@ export default function GarminMcpPage() {
     slug="garmin-mcp"
     eyebrow="Garmin MCP"
     title="A personal Garmin MCP connection."
-    intro="TRAPEAK is developing a remote MCP server intended to expose user-authorized Garmin activity data to compatible AI clients. It is read-only by design for the MVP and is not yet available."
+    intro="TRAPEAK plans to add user-authorized Garmin activity data to its existing remote MCP server. The Garmin source is not available and depends on provider approval."
     summary="The planned Garmin MCP is a controlled interface: the AI requests a specific activity or time range, and TRAPEAK returns only the authorized data for that user."
     statusLabel="PLANNED"
     status="Garmin access is pending review. Tool names and available fields remain provisional until the provider integration is approved and validated."
@@ -32,7 +32,7 @@ export default function GarminMcpPage() {
     prompts={["Get my running activities from the last 30 days.", "Show the laps and heart-rate summary for yesterday's run.", "Compare weekly distance over the last eight weeks."]}
     sourceNote="Garmin remains a planned source and is subject to provider approval."
     faqs={[
-      { question: "Is there a public Garmin MCP endpoint now?", answer: "No. TRAPEAK MCP is in development. Production access depends on completion of the product and approval of the Garmin integration." },
+      { question: "Is Garmin available through TRAPEAK MCP now?", answer: "No. The TRAPEAK MCP is live in private beta with Wahoo, but Garmin depends on provider approval and has not been implemented." },
       { question: "Is this Garmin's official MCP server?", answer: "No. TRAPEAK is an independent product and is not currently an official Garmin partner. Garmin does not operate or endorse the planned TRAPEAK MCP." },
       { question: "Can one user see another user's activities?", answer: "The planned architecture requires strict per-user authorization and isolation. A model must not be able to enumerate or request another user's data." },
       { question: "Will the MVP write workouts back to Garmin?", answer: "No. The MVP is planned as read-only. Creating or modifying workouts is outside the current scope." },

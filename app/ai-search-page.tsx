@@ -18,7 +18,7 @@ export type AiSearchPageProps = {
   title: string;
   intro: string;
   summary: string;
-  statusLabel: "IN DEVELOPMENT" | "PLANNED" | "ROADMAP";
+  statusLabel: "PRIVATE BETA" | "PLANNED" | "ROADMAP";
   status: string;
   steps: Step[];
   dataTitle: string;
@@ -112,7 +112,7 @@ export default function AiSearchPage({
 
       <section className="guide-section shell" id="how">
         <div className="guide-heading">
-          <p className="section-index">HOW IT IS PLANNED TO WORK</p>
+          <p className="section-index">{statusLabel === "PRIVATE BETA" ? "HOW IT WORKS" : "HOW IT IS PLANNED TO WORK"}</p>
           <h2>From permission<br />to context.</h2>
         </div>
         <ol className="guide-steps">
@@ -127,7 +127,7 @@ export default function AiSearchPage({
 
       <section className="guide-data" id="data">
         <div className="shell guide-data-grid">
-          <div><p className="section-index light">PLANNED DATA ACCESS</p><h2>{dataTitle}</h2><p>{dataIntro}</p></div>
+          <div><p className="section-index light">{statusLabel === "PRIVATE BETA" ? "DATA ACCESS" : "PLANNED DATA ACCESS"}</p><h2>{dataTitle}</h2><p>{dataIntro}</p></div>
           <ul>{dataPoints.map((point, index) => <li key={point}><span>0{index + 1}</span>{point}</li>)}</ul>
         </div>
       </section>
@@ -160,7 +160,7 @@ export default function AiSearchPage({
       </section>
 
       <section className="final-cta">
-        <div className="shell"><BrandIcon className="cta-brand-icon" size={70} /><h2>Follow the build.</h2><p>Join early access and hear when the first approved integration is available.</p><a className="button gradient" href="mailto:support@trapeak.com?subject=TRAPEAK%20early%20access">Join early access <span>↗</span></a></div>
+        <div className="shell"><BrandIcon className="cta-brand-icon" size={70} /><h2>Bring your context.</h2><p>Request access to the TRAPEAK private beta.</p><a className="button gradient" href="mailto:support@trapeak.com?subject=TRAPEAK%20private%20beta">Request access <span>↗</span></a></div>
       </section>
 
       <footer className="shell guide-footer">
@@ -168,7 +168,7 @@ export default function AiSearchPage({
         <div><Link className="footer-heading-link" href="/ai-guides">AI GUIDES</Link>{guides.map((guide) => <Link href={guide.href} key={guide.href}>{guide.label}</Link>)}</div>
         <div><b>LEGAL</b><Link href="/privacy">Privacy Policy</Link><Link href="/terms">Terms of Service</Link><Link href="/data-deletion">Data Deletion</Link></div>
         <div><b>CONTACT</b><a href="mailto:support@trapeak.com">support@trapeak.com</a></div>
-        <p className="copyright">© 2026 TRAPEAK. Product in development. Wahoo, Garmin, ChatGPT, Claude, and other names and trademarks belong to their respective owners. References do not imply endorsement or partnership.</p>
+        <p className="copyright">© 2026 TRAPEAK. Private beta. Wahoo, Garmin, ChatGPT, Claude, and other names and trademarks belong to their respective owners. References do not imply endorsement or partnership.</p>
       </footer>
     </main>
   );
