@@ -107,3 +107,24 @@ test("returns a safe error without exposing Wahoo response bodies", async () => 
       && !error.message.includes("provider details"),
   );
 });
+
+test("revokes Wahoo permissions with the authenticated access token", async () => {
+  let requestUrl: URL | undefined;
+  let requestInit: RequestInit | undefined;
+  const adapter = new WahooProviderAdapter(config, {
+    fetch: async (input, init) => {
+      requestUrl = new URL(input.toString());
+      requestInit = init;
+      return new Response(null, { status: 204 });
+    },
+  });
+
+  await adapter.revokeAccess({
+    accessToken: "access-token",
+    scopes: ["user_read"],
+  });
+
+  assert.equal(requestUrl?.toString(), "https://api.wahooligan.com/v1/permissions");
+  assert.equal(requestInit?.method, "DELETE");
+  assert.deepEqual(requestInit?.headers, { Authorization: "Bearer access-token" });
+});

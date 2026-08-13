@@ -12,6 +12,11 @@ TRAPEAK подключает Wahoo напрямую через Wahoo Cloud API �
 4. Callback проверяет `state`, обменивает authorization code на токены и получает Wahoo user profile.
 5. Токены сохраняются в БД только в зашифрованном виде.
 
+Callback route:
+
+- production: `https://trapeak.com/api/integrations/wahoo/callback`;
+- Preview: тот же path на стабильном Preview-домене, указанном в `APP_URL`.
+
 Используемые scopes: `user_read`, `workouts_read`, `offline_data`. `user_read` требуется для API-вызовов, а `offline_data` — для webhooks и фоновой синхронизации.
 
 ## Token lifecycle
@@ -34,4 +39,4 @@ Wahoo Cloud API не возвращает завершённые трениро�
 
 - [Wahoo Cloud overview](https://developers.wahooligan.com/cloud)
 - [Wahoo Cloud API reference](https://cloud-api.wahooligan.com/)
-
+- [Wahoo Developer Portal](https://developers.wahooligan.com/)

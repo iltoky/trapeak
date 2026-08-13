@@ -11,10 +11,12 @@
 
 ## Нужно сейчас
 
-1. Добавить `WAHOO_CLIENT_ID` и `WAHOO_CLIENT_SECRET` в Preview environment Vercel после появления callback route.
-2. Зарегистрировать выданный callback URL в Wahoo Developer Portal.
-3. Выполнить реальное тестовое подключение Wahoo в Preview.
-4. Garmin оставить отложенным до возобновления программы и получения API-доступа.
+1. Открыть [Wahoo Developer Portal](https://developers.wahooligan.com/) и своё одобренное Cloud API application.
+2. Зарегистрировать Preview callback URL, который будет выдан после подготовки стабильного Preview-домена. Production callback: `https://trapeak.com/api/integrations/wahoo/callback`.
+3. Добавить `WAHOO_CLIENT_ID` и `WAHOO_CLIENT_SECRET` только в Preview environment Vercel.
+4. Подключить Neon PostgreSQL через Vercel Marketplace, применить миграции и добавить `TOKEN_ENCRYPTION_KEY`.
+5. Выполнить реальное тестовое подключение Wahoo в Preview.
+6. Garmin оставить отложенным до возобновления программы и получения API-доступа.
 
 ## Для Wahoo integration
 
@@ -24,6 +26,8 @@
 - выполнить реальное тестовое подключение в evaluation environment.
 
 Client secret и пользовательские токены нельзя передавать в сообщениях: они добавляются только в secrets соответствующего окружения.
+
+`TOKEN_ENCRYPTION_KEY` создаётся локально командой `openssl rand -base64 32`; значение также нельзя передавать в сообщениях или сохранять в Git.
 
 ## Потребуется перед production-запуском
 
