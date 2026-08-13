@@ -18,5 +18,6 @@
 ## Разработка
 
 - [Правила выполнения задач](development/task-workflow.md)
+- [Процесс подготовки и публикации релизов](development/release-workflow.md)
+- [История релизов](releases/README.md)
 - [Что требуется от владельца проекта](project-owner-actions.md)
-
