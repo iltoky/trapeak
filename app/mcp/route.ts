@@ -5,20 +5,34 @@ import { z } from "zod";
 
 import { requireMcpUserId } from "@/lib/mcp/auth";
 import {
+  createLabReport,
+  getLabReport,
+  getLabResultHistory,
+  listLabReports,
+} from "@/lib/labs/data";
+import {
+  labResultFlags,
+  labTestTypes,
+  parseLabReportInput,
+} from "@/lib/labs/model";
+import {
   getMcpActivity,
   getMcpAthleteProfiles,
   listMcpActivities,
 } from "@/lib/mcp/data";
 import {
+  createNutritionEntry,
   getNutritionDaySummaries,
   listNutritionEntries,
 } from "@/lib/nutrition/data";
-import { nutritionMealTypes } from "@/lib/nutrition/model";
+import { nutritionMealTypes, parseNutritionEntryInput } from "@/lib/nutrition/model";
 
 const providerSchema = z.enum(["garmin", "suunto", "wahoo"]);
 const nullableNumber = z.number().nullable();
 const dateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 const mealTypeSchema = z.enum(nutritionMealTypes);
+const labTestTypeSchema = z.enum(labTestTypes);
+const labResultFlagSchema = z.enum(labResultFlags);
 const activitySummarySchema = z.object({
   id: z.string().uuid(),
   provider: providerSchema,
@@ -50,12 +64,15 @@ const nutritionEntrySchema = z.object({
   id: z.string().uuid(),
   consumedAt: z.string(),
   mealType: mealTypeSchema,
-  title: z.string(),
+  description: z.string(),
   caloriesKilocalories: z.number(),
   proteinGrams: z.number(),
   carbohydratesGrams: z.number(),
   fatGrams: z.number(),
   notes: z.string().nullable(),
+  estimated: z.boolean(),
+  estimationNotes: z.string().nullable(),
+  source: z.enum(["manual", "ai"]),
 });
 const nutritionDaySummarySchema = z.object({
   date: dateSchema,
@@ -64,6 +81,33 @@ const nutritionDaySummarySchema = z.object({
   proteinGrams: z.number(),
   carbohydratesGrams: z.number(),
   fatGrams: z.number(),
+});
+const labResultSchema = z.object({
+  id: z.string().uuid(),
+  analyteName: z.string(),
+  valueText: z.string(),
+  valueNumeric: z.number().nullable(),
+  unit: z.string().nullable(),
+  referenceRange: z.string().nullable(),
+  referenceMin: z.number().nullable(),
+  referenceMax: z.number().nullable(),
+  flag: labResultFlagSchema,
+});
+const labReportSummarySchema = z.object({
+  id: z.string().uuid(),
+  collectedAt: z.string(),
+  testType: labTestTypeSchema,
+  title: z.string(),
+  laboratory: z.string().nullable(),
+  notes: z.string().nullable(),
+  resultCount: z.number().int(),
+});
+const labReportSchema = labReportSummarySchema.extend({ results: z.array(labResultSchema) });
+const labHistoryPointSchema = labResultSchema.extend({
+  reportId: z.string().uuid(),
+  collectedAt: z.string(),
+  testType: labTestTypeSchema,
+  reportTitle: z.string(),
 });
 
 const handler = createMcpHandler(
@@ -193,11 +237,72 @@ const handler = createMcpHandler(
     );
 
     server.registerTool(
+      "create_nutrition_entry",
+      {
+        title: "Save a nutrition entry",
+        description:
+          "Use this only when the authenticated user explicitly asks to save, add, log, or record a meal. Save the user's food description with total calories and macronutrients that the AI has already calculated. Mark estimates and state the portion assumptions used. Do not call this tool for hypothetical meals or analysis-only requests.",
+        inputSchema: z.object({
+          consumedAt: z.string().datetime({ offset: true }).describe(
+            "When the meal was consumed as an ISO 8601 timestamp with timezone offset.",
+          ),
+          mealType: mealTypeSchema,
+          description: z.string().min(1).max(2000).describe(
+            "Concise description of what the user ate, preserving useful quantities from the request.",
+          ),
+          caloriesKilocalories: z.number().min(0).max(20000),
+          proteinGrams: z.number().min(0).max(2000),
+          carbohydratesGrams: z.number().min(0).max(2000),
+          fatGrams: z.number().min(0).max(2000),
+          estimated: z.boolean().describe(
+            "True when any calories or macronutrients were estimated rather than supplied exactly.",
+          ),
+          estimationNotes: z.string().min(1).max(1000).nullable().describe(
+            "Portion and product assumptions used for an estimate; null only when values were supplied exactly.",
+          ),
+          notes: z.string().max(1000).nullable().optional(),
+        }),
+        outputSchema: z.object({ entry: nutritionEntrySchema, created: z.boolean() }),
+        annotations: {
+          readOnlyHint: false,
+          destructiveHint: false,
+          openWorldHint: false,
+          idempotentHint: true,
+        },
+      },
+      async (input, context) => {
+        const userId = requireMcpUserId(context.http?.authInfo);
+        const normalized = parseNutritionEntryInput({ ...input, source: "ai" });
+        const result = await createNutritionEntry(userId, normalized);
+        const entry = {
+          id: result.id,
+          consumedAt: normalized.consumedAt.toISOString(),
+          mealType: normalized.mealType,
+          description: normalized.description,
+          caloriesKilocalories: normalized.caloriesKilocalories,
+          proteinGrams: normalized.proteinGrams,
+          carbohydratesGrams: normalized.carbohydratesGrams,
+          fatGrams: normalized.fatGrams,
+          notes: normalized.notes,
+          estimated: normalized.estimated,
+          estimationNotes: normalized.estimationNotes,
+          source: normalized.source,
+        };
+        return {
+          content: [{ type: "text", text: result.created
+            ? "Nutrition entry saved."
+            : "This nutrition entry was already saved; no duplicate was created." }],
+          structuredContent: { entry, created: result.created },
+        };
+      },
+    );
+
+    server.registerTool(
       "list_nutrition_entries",
       {
         title: "List nutrition entries",
         description:
-          "Use this to read the authenticated TRAPEAK user's manually logged meals and macronutrients, optionally filtered by inclusive UTC date range or meal type.",
+          "Use this to read the authenticated TRAPEAK user's saved meal descriptions, calories, macronutrients, and estimation assumptions, optionally filtered by inclusive UTC date range or meal type.",
         inputSchema: z.object({
           from: dateSchema.optional().describe(
             "Inclusive UTC start date in YYYY-MM-DD format.",
@@ -239,7 +344,7 @@ const handler = createMcpHandler(
       {
         title: "Get nutrition summary",
         description:
-          "Use this to calculate daily calories and macronutrient totals from the authenticated TRAPEAK user's manual nutrition log over an inclusive UTC date range.",
+          "Use this to calculate daily calories and macronutrient totals from the authenticated TRAPEAK user's nutrition log over an inclusive UTC date range.",
         inputSchema: z.object({
           from: dateSchema.describe("Inclusive UTC start date in YYYY-MM-DD format."),
           to: dateSchema.describe("Inclusive UTC end date in YYYY-MM-DD format."),
@@ -266,11 +371,128 @@ const handler = createMcpHandler(
         };
       },
     );
+
+    server.registerTool(
+      "create_lab_report",
+      {
+        title: "Save laboratory results",
+        description:
+          "Use this only when the authenticated user explicitly asks to save laboratory results from blood, urine, stool, saliva, or another specimen. Preserve the reported analyte names, values, units, reference ranges, and laboratory flags. Do not invent missing measurements, ranges, or medical interpretations.",
+        inputSchema: z.object({
+          collectedAt: z.string().datetime({ offset: true }),
+          testType: labTestTypeSchema,
+          title: z.string().min(1).max(200),
+          laboratory: z.string().max(200).nullable().optional(),
+          notes: z.string().max(2000).nullable().optional(),
+          results: z.array(z.object({
+            analyteName: z.string().min(1).max(200),
+            valueText: z.string().min(1).max(200),
+            valueNumeric: z.number().nullable().optional(),
+            unit: z.string().max(100).nullable().optional(),
+            referenceRange: z.string().max(200).nullable().optional(),
+            referenceMin: z.number().nullable().optional(),
+            referenceMax: z.number().nullable().optional(),
+            flag: labResultFlagSchema.default("unknown"),
+          })).min(1).max(200),
+        }),
+        outputSchema: z.object({
+          reportId: z.string().uuid(), created: z.boolean(), resultCount: z.number().int(),
+        }),
+        annotations: {
+          readOnlyHint: false, destructiveHint: false, openWorldHint: false, idempotentHint: true,
+        },
+      },
+      async (input, context) => {
+        const userId = requireMcpUserId(context.http?.authInfo);
+        const result = await createLabReport(userId, parseLabReportInput(input));
+        return {
+          content: [{ type: "text", text: result.created
+            ? `Laboratory report saved with ${result.resultCount} results.`
+            : "This laboratory report was already saved; no duplicate was created." }],
+          structuredContent: {
+            reportId: result.id, created: result.created, resultCount: result.resultCount,
+          },
+        };
+      },
+    );
+
+    server.registerTool(
+      "list_lab_reports",
+      {
+        title: "List laboratory reports",
+        description:
+          "Use this to list the authenticated user's saved blood, urine, stool, saliva, or other laboratory reports, optionally filtered by date or test type.",
+        inputSchema: z.object({
+          from: dateSchema.optional(), to: dateSchema.optional(),
+          testType: labTestTypeSchema.optional(),
+          limit: z.number().int().min(1).max(100).default(30),
+        }),
+        outputSchema: z.object({ reports: z.array(labReportSummarySchema), count: z.number().int() }),
+        annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
+      },
+      async (input, context) => {
+        const userId = requireMcpUserId(context.http?.authInfo);
+        const reports = await listLabReports({ userId, ...input });
+        return {
+          content: [{ type: "text", text: `Found ${reports.length} laboratory reports.` }],
+          structuredContent: { reports: [...reports], count: reports.length },
+        };
+      },
+    );
+
+    server.registerTool(
+      "get_lab_report",
+      {
+        title: "Get a laboratory report",
+        description:
+          "Use this after list_lab_reports to read every stored result, unit, reference range, and laboratory flag from one report owned by the authenticated user.",
+        inputSchema: z.object({ id: z.string().uuid() }),
+        outputSchema: z.object({ report: labReportSchema.nullable() }),
+        annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
+      },
+      async ({ id }, context) => {
+        const userId = requireMcpUserId(context.http?.authInfo);
+        const report = await getLabReport(userId, id);
+        return {
+          content: [{ type: "text", text: report
+            ? "Laboratory report found." : "Laboratory report not found." }],
+          structuredContent: { report },
+        };
+      },
+    );
+
+    server.registerTool(
+      "get_lab_result_history",
+      {
+        title: "Get laboratory indicator history",
+        description:
+          "Use this to retrieve an authenticated user's saved history for one exact analyte name, such as ALT or AST. Return the original value, unit, reference range, and flag for each date; do not compare numeric values across incompatible units.",
+        inputSchema: z.object({
+          analyteName: z.string().min(1).max(200), from: dateSchema.optional(),
+          to: dateSchema.optional(), limit: z.number().int().min(1).max(200).default(100),
+        }),
+        outputSchema: z.object({
+          analyteName: z.string(), points: z.array(labHistoryPointSchema), count: z.number().int(),
+        }),
+        annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
+      },
+      async (input, context) => {
+        const userId = requireMcpUserId(context.http?.authInfo);
+        const points = await getLabResultHistory({ userId, ...input });
+        return {
+          content: [{ type: "text", text:
+            `Found ${points.length} saved results for ${input.analyteName}.` }],
+          structuredContent: {
+            analyteName: input.analyteName, points: [...points], count: points.length,
+          },
+        };
+      },
+    );
   },
   {
-    serverInfo: { name: "trapeak", version: "0.5.0" },
+    serverInfo: { name: "trapeak", version: "0.6.0" },
     instructions:
-      "TRAPEAK provides read-only access to the authenticated user's normalized fitness and manually logged nutrition data. Use get_athlete_profile for personal metrics, list_activities to find workouts, get_activity for full normalized workout metrics, list_nutrition_entries for meals, and get_nutrition_summary for daily macro totals. Never claim access to raw provider payloads or records that are not returned by these tools, and do not present nutrition data as medical advice.",
+      "TRAPEAK stores authenticated fitness, nutrition, and laboratory data. Call write tools only after the user explicitly asks to save data. Nutrition estimates must include assumptions. Laboratory tools preserve reported values, units, ranges, and flags without inventing missing data or diagnosing conditions. Read tools may retrieve only records returned for the authenticated user.",
   },
 );
 

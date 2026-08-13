@@ -192,7 +192,7 @@ export default async function DashboardPage({
           <div>
             <h2>Nutrition</h2>
             <p>
-              Log meals manually, then let connected AI assistants read daily calories and macros through TRAPEAK MCP.
+              Ask your connected AI assistant to calculate and save meals. TRAPEAK keeps the description, total calories, macros, and estimation assumptions.
             </p>
             {nutritionStorageReady ? (
               <>
@@ -206,62 +206,23 @@ export default async function DashboardPage({
                 ) : (
                   <p className="account-sync-status">No meals logged today.</p>
                 )}
-                <form className="nutrition-form" action="/api/nutrition" method="post">
-                  <label>
-                    Meal
-                    <select name="mealType" defaultValue="lunch" required>
-                      <option value="breakfast">Breakfast</option>
-                      <option value="lunch">Lunch</option>
-                      <option value="dinner">Dinner</option>
-                      <option value="snack">Snack</option>
-                    </select>
-                  </label>
-                  <label className="nutrition-wide">
-                    Food or meal
-                    <input name="title" maxLength={120} placeholder="Rice and chicken" required />
-                  </label>
-                  <label>
-                    Consumed at (UTC)
-                    <input
-                      name="consumedAt"
-                      type="datetime-local"
-                      defaultValue={new Date().toISOString().slice(0, 16)}
-                      required
-                    />
-                  </label>
-                  <label>
-                    Calories
-                    <input name="caloriesKilocalories" type="number" min="0" max="20000" step="0.1" required />
-                  </label>
-                  <label>
-                    Protein (g)
-                    <input name="proteinGrams" type="number" min="0" max="2000" step="0.1" required />
-                  </label>
-                  <label>
-                    Carbs (g)
-                    <input name="carbohydratesGrams" type="number" min="0" max="2000" step="0.1" required />
-                  </label>
-                  <label>
-                    Fat (g)
-                    <input name="fatGrams" type="number" min="0" max="2000" step="0.1" required />
-                  </label>
-                  <label className="nutrition-wide">
-                    Notes (optional)
-                    <textarea name="notes" maxLength={1000} rows={3} />
-                  </label>
-                  <button className="button black" type="submit">Save meal</button>
-                </form>
+                <p className="account-sync-status">
+                  Example: “Save breakfast: 2 eggs, 2 sausages and an avocado.”
+                </p>
                 {nutritionEntries && nutritionEntries.length > 0 ? (
                   <div className="nutrition-list">
                     <h3>Recent entries</h3>
                     {nutritionEntries.map((entry) => (
                       <article key={entry.id}>
                         <div>
-                          <b>{entry.title}</b>
+                          <b>{entry.description}</b>
                           <small>{entry.mealType} · {formatNutritionTime(entry.consumedAt)}</small>
                           <span>
                             {entry.caloriesKilocalories} kcal · P {entry.proteinGrams} g · C {entry.carbohydratesGrams} g · F {entry.fatGrams} g
                           </span>
+                          {entry.estimated && entry.estimationNotes ? (
+                            <small>Estimated: {entry.estimationNotes}</small>
+                          ) : null}
                         </div>
                         <form action={`/api/nutrition/${entry.id}/delete`} method="post">
                           <button type="submit">Delete</button>

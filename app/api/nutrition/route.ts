@@ -27,12 +27,15 @@ export async function POST(request: Request) {
     const input = parseNutritionEntryInput({
       consumedAt: form.get("consumedAt"),
       mealType: form.get("mealType"),
-      title: form.get("title"),
+      description: form.get("description"),
       caloriesKilocalories: form.get("caloriesKilocalories"),
       proteinGrams: form.get("proteinGrams"),
       carbohydratesGrams: form.get("carbohydratesGrams"),
       fatGrams: form.get("fatGrams"),
       notes: form.get("notes"),
+      estimated: form.get("estimated"),
+      estimationNotes: form.get("estimationNotes"),
+      source: "manual",
     });
     await createNutritionEntry(user.id, input);
     return Response.redirect(new URL("/dashboard?nutrition=created", appUrl), 303);

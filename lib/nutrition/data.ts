@@ -1,6 +1,6 @@
 import "server-only";
 
-import { randomUUID } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 
 import { getDatabase } from "../db/client";
 import { toUtcDayStart, toUtcNextDayStart } from "../mcp/dates";
@@ -10,12 +10,20 @@ export type NutritionEntry = Readonly<{
   id: string;
   consumedAt: string;
   mealType: NutritionMealType;
-  title: string;
+  description: string;
   caloriesKilocalories: number;
   proteinGrams: number;
   carbohydratesGrams: number;
   fatGrams: number;
   notes: string | null;
+  estimated: boolean;
+  estimationNotes: string | null;
+  source: "manual" | "ai";
+}>;
+
+export type CreateNutritionEntryResult = Readonly<{
+  id: string;
+  created: boolean;
 }>;
 
 export type NutritionDaySummary = Readonly<{
@@ -31,12 +39,15 @@ type NutritionEntryRow = Readonly<{
   id: string;
   consumed_at: string | Date;
   meal_type: NutritionMealType;
-  title: string;
+  description: string;
   calories_kilocalories: number | string;
   protein_grams: number | string;
   carbohydrates_grams: number | string;
   fat_grams: number | string;
   notes: string | null;
+  estimated: boolean;
+  estimation_notes: string | null;
+  source: "manual" | "ai";
 }>;
 
 type NutritionSummaryRow = Readonly<{
@@ -53,33 +64,74 @@ function toEntry(row: NutritionEntryRow): NutritionEntry {
     id: row.id,
     consumedAt: new Date(row.consumed_at).toISOString(),
     mealType: row.meal_type,
-    title: row.title,
+    description: row.description,
     caloriesKilocalories: Number(row.calories_kilocalories),
     proteinGrams: Number(row.protein_grams),
     carbohydratesGrams: Number(row.carbohydrates_grams),
     fatGrams: Number(row.fat_grams),
     notes: row.notes,
+    estimated: row.estimated,
+    estimationNotes: row.estimation_notes,
+    source: row.source,
   };
+}
+
+function createIdempotencyKey(input: NutritionEntryInput) {
+  return createHash("sha256").update(JSON.stringify({
+    consumedAt: input.consumedAt.toISOString(),
+    mealType: input.mealType,
+    description: input.description,
+    caloriesKilocalories: input.caloriesKilocalories,
+    proteinGrams: input.proteinGrams,
+    carbohydratesGrams: input.carbohydratesGrams,
+    fatGrams: input.fatGrams,
+    notes: input.notes,
+    estimated: input.estimated,
+    estimationNotes: input.estimationNotes,
+  })).digest("hex");
 }
 
 export async function createNutritionEntry(
   userId: string,
   input: NutritionEntryInput,
-): Promise<string> {
+): Promise<CreateNutritionEntryResult> {
   const sql = getDatabase();
   const id = randomUUID();
-  await sql`
+  const idempotencyKey = input.source === "ai"
+    ? createIdempotencyKey(input)
+    : null;
+  const inserted = await sql`
     INSERT INTO nutrition_entries (
-      id, user_id, consumed_at, meal_type, title,
+      id, user_id, consumed_at, meal_type, title, description,
       calories_kilocalories, protein_grams, carbohydrates_grams,
-      fat_grams, notes
+      fat_grams, notes, estimated, estimation_notes, source, idempotency_key
     ) VALUES (
       ${id}, ${userId}, ${input.consumedAt.toISOString()}, ${input.mealType},
-      ${input.title}, ${input.caloriesKilocalories}, ${input.proteinGrams},
-      ${input.carbohydratesGrams}, ${input.fatGrams}, ${input.notes}
+      ${input.description.slice(0, 120)}, ${input.description},
+      ${input.caloriesKilocalories}, ${input.proteinGrams},
+      ${input.carbohydratesGrams}, ${input.fatGrams}, ${input.notes},
+      ${input.estimated}, ${input.estimationNotes}, ${input.source},
+      ${idempotencyKey}
     )
-  `;
-  return id;
+    ON CONFLICT (user_id, idempotency_key)
+      WHERE idempotency_key IS NOT NULL
+    DO NOTHING
+    RETURNING id
+  ` as Array<{ id: string }>;
+  if (inserted[0]) {
+    return { id: inserted[0].id, created: true };
+  }
+  const existing = await sql`
+    SELECT id
+      FROM nutrition_entries
+     WHERE user_id = ${userId}
+       AND idempotency_key = ${idempotencyKey}
+     LIMIT 1
+  ` as Array<{ id: string }>;
+  if (!existing[0]) {
+    throw new Error("Nutrition entry was not created");
+  }
+  return { id: existing[0].id, created: false };
 }
 
 export async function deleteNutritionEntry(userId: string, id: string) {
@@ -103,8 +155,9 @@ export async function listNutritionEntries(input: Readonly<{
   const toExclusive = toUtcNextDayStart(input.to);
   const mealType = input.mealType ?? null;
   const rows = await sql`
-    SELECT id, consumed_at, meal_type, title, calories_kilocalories,
-           protein_grams, carbohydrates_grams, fat_grams, notes
+    SELECT id, consumed_at, meal_type, COALESCE(description, title) AS description,
+           calories_kilocalories, protein_grams, carbohydrates_grams,
+           fat_grams, notes, estimated, estimation_notes, source
       FROM nutrition_entries
      WHERE user_id = ${input.userId}
        AND (${from}::timestamptz IS NULL OR consumed_at >= ${from}::timestamptz)

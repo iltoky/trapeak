@@ -2,7 +2,7 @@ import { LegalPage } from "../legal-page";
 
 export default function Deletion() {
   return <LegalPage eyebrow="LEGAL / 03" title="Data Deletion">
-    <p>You can request deletion of your TRAPEAK account, imported fitness profile, stored workouts, nutrition records, connected-provider records, and support information associated with you.</p>
+    <p>You can request deletion of your TRAPEAK account, imported fitness profile, stored workouts, nutrition records, laboratory reports and results, connected-provider records, and support information associated with you.</p>
     <h2>How to request deletion</h2>
     <ol>
       <li>First disconnect Wahoo in the TRAPEAK dashboard if you want to revoke future provider access.</li>
