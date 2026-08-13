@@ -12,7 +12,7 @@ export class WahooConfigurationError extends Error {
 
 function requireValue(
   environment: Readonly<Record<string, string | undefined>>,
-  variable: "WAHOO_CLIENT_ID" | "WAHOO_CLIENT_SECRET",
+  variable: "WAHOO_CLIENT_ID" | "WAHOO_CLIENT_SECRET" | "WAHOO_WEBHOOK_TOKEN",
 ): string {
   const value = environment[variable]?.trim();
   if (!value) {
@@ -29,4 +29,16 @@ export function readWahooConfig(
     clientId: requireValue(environment, "WAHOO_CLIENT_ID"),
     clientSecret: requireValue(environment, "WAHOO_CLIENT_SECRET"),
   };
+}
+
+export function readWahooWebhookToken(
+  environment: Readonly<Record<string, string | undefined>> = process.env,
+): string {
+  return requireValue(environment, "WAHOO_WEBHOOK_TOKEN");
+}
+
+export function isWahooWebhookConfigured(
+  environment: Readonly<Record<string, string | undefined>> = process.env,
+): boolean {
+  return Boolean(environment.WAHOO_WEBHOOK_TOKEN?.trim());
 }

@@ -5,6 +5,7 @@ import { isAuthConfigured } from "@/lib/auth/config";
 import { requireAuthUser } from "@/lib/auth/current-user";
 import { getProviderConnectionSummary } from "@/lib/integrations/connections";
 import { getProviderDataSummary } from "@/lib/integrations/provider-data";
+import { isWahooWebhookConfigured } from "@/lib/integrations/wahoo/config";
 import { SiteHeader } from "../site-header";
 
 export const metadata = { title: "Account" };
@@ -72,6 +73,7 @@ export default async function DashboardPage({
     : result
       ? wahooMessages[result]
       : undefined;
+  const automaticSyncEnabled = isWahooWebhookConfigured();
 
   return (
     <main className="account-page">
@@ -109,6 +111,7 @@ export default async function DashboardPage({
                   <p className="account-sync-status">
                     {dataSummary.storedActivityCount} completed workouts stored.
                     Last sync: {formatSyncTime(dataSummary.lastSyncedAt)}.
+                    {automaticSyncEnabled ? " New completed workouts sync automatically." : ""}
                   </p>
                 ) : null}
                 {dataStorageReady ? (

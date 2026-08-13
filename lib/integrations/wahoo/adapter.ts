@@ -16,6 +16,76 @@ const WAHOO_SCOPES = ["user_read", "workouts_read", "offline_data"] as const;
 type Fetcher = typeof fetch;
 type Clock = () => number;
 
+const WAHOO_WORKOUT_TYPE_NAMES: Readonly<Record<string, string>> = {
+  "0": "Biking",
+  "1": "Running",
+  "2": "Fitness equipment",
+  "3": "Track running",
+  "4": "Trail running",
+  "5": "Treadmill running",
+  "6": "Walking",
+  "7": "Speed walking",
+  "8": "Nordic walking",
+  "9": "Hiking",
+  "10": "Mountaineering",
+  "11": "Cyclocross",
+  "12": "Indoor biking",
+  "13": "Mountain biking",
+  "14": "Recumbent biking",
+  "15": "Road biking",
+  "16": "Track biking",
+  "17": "Motorcycling",
+  "18": "Indoor workout",
+  "19": "Treadmill workout",
+  "20": "Elliptical",
+  "21": "Exercise bike",
+  "22": "Indoor rowing",
+  "23": "Climber",
+  "25": "Lap swimming",
+  "26": "Open-water swimming",
+  "27": "Snowboarding",
+  "28": "Skiing",
+  "29": "Downhill skiing",
+  "30": "Cross-country skiing",
+  "31": "Skating",
+  "32": "Ice skating",
+  "33": "Inline skating",
+  "34": "Longboarding",
+  "35": "Sailing",
+  "36": "Windsurfing",
+  "37": "Canoeing",
+  "38": "Kayaking",
+  "39": "Rowing",
+  "40": "Kiteboarding",
+  "41": "Stand-up paddleboarding",
+  "42": "Workout",
+  "43": "Cardio class",
+  "44": "Stair climber",
+  "45": "Wheelchair",
+  "46": "Golf",
+  "47": "Other",
+  "49": "Indoor cycling class",
+  "56": "Treadmill walking",
+  "61": "Indoor cycling trainer",
+  "62": "Multisport",
+  "63": "Transition",
+  "64": "E-biking",
+  "65": "TICKR offline",
+  "66": "Yoga",
+  "67": "Running race",
+  "68": "Virtual indoor biking",
+  "69": "Mental strength",
+  "70": "Handcycling",
+  "71": "Virtual indoor running",
+  "255": "Unknown",
+};
+
+export function getWahooWorkoutTypeName(
+  activityTypeId: string,
+): string | undefined {
+  return WAHOO_WORKOUT_TYPE_NAMES[activityTypeId];
+}
+
 type WahooTokenResponse = Readonly<{
   access_token?: unknown;
   refresh_token?: unknown;
@@ -103,7 +173,7 @@ function requireObject(
   return value as Readonly<Record<string, unknown>>;
 }
 
-function normalizeWorkout(value: unknown): ProviderActivity | null {
+export function normalizeWahooWorkout(value: unknown): ProviderActivity | null {
   const workout = requireObject(value, "workout list");
   const summaryValue = workout.workout_summary;
   if (!summaryValue || typeof summaryValue !== "object" || Array.isArray(summaryValue)) {
@@ -121,6 +191,13 @@ function normalizeWorkout(value: unknown): ProviderActivity | null {
   const durationSeconds = optionalNumber(summary.duration_total_accum)
     ?? (workoutMinutes !== undefined ? workoutMinutes * 60 : undefined);
   const name = optionalString(workout.name);
+  const activityTypeId = workout.workout_type_id === null
+    || workout.workout_type_id === undefined
+    ? undefined
+    : String(workout.workout_type_id);
+  const activityTypeName = activityTypeId
+    ? getWahooWorkoutTypeName(activityTypeId)
+    : undefined;
   const activeDurationSeconds = optionalNumber(summary.duration_active_accum);
   const pausedDurationSeconds = optionalNumber(summary.duration_paused_accum);
   const distanceMeters = optionalNumber(summary.distance_accum);
@@ -145,9 +222,8 @@ function normalizeWorkout(value: unknown): ProviderActivity | null {
   return {
     providerActivityId,
     ...(name ? { name } : {}),
-    ...(workout.workout_type_id === null || workout.workout_type_id === undefined
-      ? {}
-      : { activityTypeId: String(workout.workout_type_id) }),
+    ...(activityTypeId ? { activityTypeId } : {}),
+    ...(activityTypeName ? { activityTypeName } : {}),
     startedAt,
     ...(durationSeconds !== undefined ? { durationSeconds } : {}),
     ...(activeDurationSeconds !== undefined ? { activeDurationSeconds } : {}),
@@ -300,7 +376,7 @@ export class WahooProviderAdapter implements WearableProviderAdapter {
     }
 
     const activities = payload.workouts
-      .map(normalizeWorkout)
+      .map(normalizeWahooWorkout)
       .filter((activity): activity is ProviderActivity => activity !== null);
     const total = optionalNumber(payload.total);
     const responsePage = optionalNumber(payload.page);

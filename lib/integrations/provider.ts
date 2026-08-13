@@ -36,6 +36,7 @@ export type ProviderActivity = Readonly<{
   providerActivityId: string;
   name?: string;
   activityTypeId?: string;
+  activityTypeName?: string;
   startedAt: Date;
   durationSeconds?: number;
   activeDurationSeconds?: number;

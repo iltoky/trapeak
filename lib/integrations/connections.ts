@@ -31,6 +31,10 @@ type ProviderConnectionRow = Readonly<{
   scopes: string[];
 }>;
 
+type ProviderUserRow = Readonly<{
+  user_id: string;
+}>;
+
 export class ProviderAccountAlreadyLinkedError extends Error {
   constructor() {
     super("Provider account is already linked");
@@ -149,6 +153,23 @@ export async function getProviderConnectionSummary(
     ...(row.provider_display_name ? { displayName: row.provider_display_name } : {}),
     status: row.status,
   };
+}
+
+export async function findConnectedUserByProviderAccount(
+  provider: ProviderId,
+  providerUserId: string,
+): Promise<string | null> {
+  const sql = getDatabase();
+  const rows = await sql`
+    SELECT user_id
+      FROM provider_connections
+     WHERE provider = ${provider}
+       AND provider_user_id = ${providerUserId}
+       AND status = 'connected'
+     LIMIT 1
+  ` as ProviderUserRow[];
+
+  return rows[0]?.user_id ?? null;
 }
 
 export async function getProviderTokens(

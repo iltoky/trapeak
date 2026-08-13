@@ -1,6 +1,6 @@
 # TRP-013 — read-only remote MCP
 
-Статус: **In progress**
+Статус: **Done**
 
 ## Описание
 
@@ -23,7 +23,7 @@
 ## Release actions
 
 - В production Clerk включить Dynamic Client Registration для первого developer-mode теста либо заранее зарегистрировать поддерживаемый CIMD client.
-- Настроить default OAuth scopes: `openid`, `profile`.
+- Настроить default OAuth scopes: `openid`, `profile`, `email`.
 - Опубликовать проверенный релиз напрямую в `main`.
 - Проверить metadata endpoints и `401 WWW-Authenticate` на production.
 - Подключить `https://trapeak.com/mcp` в ChatGPT Developer mode и вызвать все три инструмента.
@@ -37,9 +37,9 @@
 
 ## QA e2e tests
 
-1. Подключить TRAPEAK как developer-mode app в ChatGPT.
-2. Завершить Clerk OAuth под production TRAPEAK account.
-3. Запросить профиль спортсмена.
-4. Запросить две последние тренировки.
-5. Получить детали одной тренировки по ID из предыдущего ответа.
-6. Убедиться, что неизвестный ID не возвращает чужие данные.
+1. [x] Подключить TRAPEAK как developer-mode app в ChatGPT.
+2. [x] Завершить Clerk OAuth под production TRAPEAK account.
+3. [x] Запросить профиль спортсмена.
+4. [x] Запросить две последние тренировки.
+5. [x] Получить детали одной тренировки по ID из предыдущего ответа.
+6. [ ] Убедиться, что неизвестный ID не возвращает чужие данные.

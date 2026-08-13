@@ -162,6 +162,7 @@ test("loads and normalizes completed Wahoo workouts", async () => {
     providerActivityId: "56519",
     name: "Morning Run",
     activityTypeId: "1",
+    activityTypeName: "Running",
     startedAt: new Date("2026-08-12T09:00:00.000Z"),
     durationSeconds: 2700,
     activeDurationSeconds: 2680,

@@ -2,6 +2,7 @@ import "server-only";
 
 import { getDatabase } from "../db/client";
 import type { ProviderId } from "../integrations/provider";
+import { getWahooWorkoutTypeName } from "../integrations/wahoo/adapter";
 import { toUtcDayStart, toUtcNextDayStart } from "./dates";
 
 export type McpAthleteProfile = Readonly<{
@@ -19,6 +20,7 @@ export type McpActivitySummary = Readonly<{
   provider: ProviderId;
   name: string | null;
   activityTypeId: string | null;
+  activityTypeName: string | null;
   startedAt: string;
   durationSeconds: number | null;
   distanceMeters: number | null;
@@ -95,6 +97,9 @@ function toActivitySummary(row: ActivityRow): McpActivitySummary {
     provider: row.provider,
     name: row.name,
     activityTypeId: row.activity_type_id,
+    activityTypeName: row.activity_type_id && row.provider === "wahoo"
+      ? getWahooWorkoutTypeName(row.activity_type_id) ?? null
+      : null,
     startedAt: toIsoString(row.started_at),
     durationSeconds: toNumber(row.duration_seconds),
     distanceMeters: toNumber(row.distance_meters),

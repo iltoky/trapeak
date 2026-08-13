@@ -17,6 +17,7 @@ const activitySummarySchema = z.object({
   provider: providerSchema,
   name: z.string().nullable(),
   activityTypeId: z.string().nullable(),
+  activityTypeName: z.string().nullable(),
   startedAt: z.string(),
   durationSeconds: nullableNumber,
   distanceMeters: nullableNumber,
@@ -166,7 +167,7 @@ const handler = createMcpHandler(
     );
   },
   {
-    serverInfo: { name: "trapeak", version: "0.3.0" },
+    serverInfo: { name: "trapeak", version: "0.4.0" },
     instructions:
       "TRAPEAK provides read-only access to the authenticated user's normalized fitness data. Use get_athlete_profile for personal metrics, list_activities to find workouts, then get_activity for full normalized metrics. Never claim access to raw provider payloads or workouts that are not returned by these tools.",
   },

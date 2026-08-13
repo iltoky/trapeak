@@ -24,14 +24,26 @@
 3. Production OAuth, disconnect/reconnect и синхронизация Wahoo проверены.
 4. Повторный sync двух тренировок не создал дублей.
 
-## Нужно сейчас для MCP
+## Выполнено для MCP
 
-1. В production instance Clerk открыть `OAuth applications`.
-2. Для первого developer-mode теста включить `Dynamic client registration`.
-3. Установить default scopes: `openid`, `profile`.
-4. После production deployment подключить `https://trapeak.com/mcp` в ChatGPT Developer mode и завершить OAuth flow.
+1. Dynamic client registration включён.
+2. Default scopes: `openid`, `profile`, `email`.
+3. `https://trapeak.com/mcp` подключён в ChatGPT Developer mode.
+4. OAuth и три read-only tools проверены владельцем.
 
-Dynamic Client Registration используется для быстрого MVP-теста. Перед публичным запуском нужно перейти на review-based CIMD/pre-registered clients или другой ограниченный OAuth client registration flow.
+## Нужно сейчас для Wahoo webhooks
+
+1. Создать случайный `WAHOO_WEBHOOK_TOKEN` и добавить его в Vercel Production secrets.
+2. В Wahoo Developer Portal указать URL `https://trapeak.com/api/integrations/wahoo/webhook`, тот же token и включить webhook.
+3. После deployment создать или обновить тестовую тренировку.
+
+## Нужно для публичного плагина OpenAI
+
+1. Выбрать publisher: верифицированное физическое лицо или компания.
+2. Указать этого же оператора в Privacy Policy и Terms.
+3. Завершить identity verification в OpenAI Platform с global data residency.
+4. Создать review account без MFA с двумя тестовыми Wahoo activities.
+5. После создания submission добавить portal token в `OPENAI_APPS_CHALLENGE`.
 
 ## Для Wahoo integration
 

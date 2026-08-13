@@ -4,6 +4,7 @@ import { randomUUID } from "node:crypto";
 
 import { getDatabase } from "../db/client";
 import type {
+  ProviderActivity,
   ProviderActivityPage,
   ProviderAthleteProfile,
   ProviderId,
@@ -166,6 +167,101 @@ export async function saveProviderSnapshot(input: Readonly<{
     createdCount: input.activityPage.activities.length - updatedCount,
     updatedCount,
   };
+}
+
+export async function saveProviderActivity(input: Readonly<{
+  userId: string;
+  provider: ProviderId;
+  activity: ProviderActivity;
+}>): Promise<Readonly<{ created: boolean }>> {
+  const sql = getDatabase();
+  const existingRows = await sql`
+    SELECT provider_activity_id
+      FROM fitness_activities
+     WHERE user_id = ${input.userId}
+       AND provider = ${input.provider}
+       AND provider_activity_id = ${input.activity.providerActivityId}
+     LIMIT 1
+  ` as ExistingActivityRow[];
+  const rawPayload = JSON.stringify(input.activity.rawData);
+
+  await sql.transaction((transaction) => [
+    transaction`
+      INSERT INTO fitness_activities (
+        id, user_id, provider, provider_activity_id, name, activity_type_id,
+        started_at, duration_seconds,
+        active_duration_seconds, paused_duration_seconds, distance_meters,
+        elevation_gain_meters, calories_kilocalories,
+        average_heart_rate_bpm, average_cadence_rpm,
+        average_speed_meters_per_second, average_power_watts,
+        normalized_power_watts, training_stress_score, work_joules,
+        time_zone, is_manual, is_edited, source_app_id,
+        provider_created_at, provider_updated_at, raw_payload, synced_at
+      ) VALUES (
+        ${randomUUID()}, ${input.userId}, ${input.provider},
+        ${input.activity.providerActivityId}, ${input.activity.name ?? null},
+        ${input.activity.activityTypeId ?? null},
+        ${input.activity.startedAt.toISOString()},
+        ${input.activity.durationSeconds ?? null},
+        ${input.activity.activeDurationSeconds ?? null},
+        ${input.activity.pausedDurationSeconds ?? null},
+        ${input.activity.distanceMeters ?? null},
+        ${input.activity.elevationGainMeters ?? null},
+        ${input.activity.caloriesKilocalories ?? null},
+        ${input.activity.averageHeartRateBpm ?? null},
+        ${input.activity.averageCadenceRpm ?? null},
+        ${input.activity.averageSpeedMetersPerSecond ?? null},
+        ${input.activity.averagePowerWatts ?? null},
+        ${input.activity.normalizedPowerWatts ?? null},
+        ${input.activity.trainingStressScore ?? null},
+        ${input.activity.workJoules ?? null}, ${input.activity.timeZone ?? null},
+        ${input.activity.isManual ?? null}, ${input.activity.isEdited ?? null},
+        ${input.activity.sourceAppId ?? null},
+        ${input.activity.providerCreatedAt?.toISOString() ?? null},
+        ${input.activity.providerUpdatedAt?.toISOString() ?? null},
+        ${rawPayload}::jsonb, NOW()
+      )
+      ON CONFLICT (user_id, provider, provider_activity_id) DO UPDATE SET
+        name = EXCLUDED.name,
+        activity_type_id = EXCLUDED.activity_type_id,
+        started_at = EXCLUDED.started_at,
+        duration_seconds = EXCLUDED.duration_seconds,
+        active_duration_seconds = EXCLUDED.active_duration_seconds,
+        paused_duration_seconds = EXCLUDED.paused_duration_seconds,
+        distance_meters = EXCLUDED.distance_meters,
+        elevation_gain_meters = EXCLUDED.elevation_gain_meters,
+        calories_kilocalories = EXCLUDED.calories_kilocalories,
+        average_heart_rate_bpm = EXCLUDED.average_heart_rate_bpm,
+        average_cadence_rpm = EXCLUDED.average_cadence_rpm,
+        average_speed_meters_per_second = EXCLUDED.average_speed_meters_per_second,
+        average_power_watts = EXCLUDED.average_power_watts,
+        normalized_power_watts = EXCLUDED.normalized_power_watts,
+        training_stress_score = EXCLUDED.training_stress_score,
+        work_joules = EXCLUDED.work_joules,
+        time_zone = EXCLUDED.time_zone,
+        is_manual = EXCLUDED.is_manual,
+        is_edited = EXCLUDED.is_edited,
+        source_app_id = EXCLUDED.source_app_id,
+        provider_created_at = EXCLUDED.provider_created_at,
+        provider_updated_at = EXCLUDED.provider_updated_at,
+        raw_payload = EXCLUDED.raw_payload,
+        synced_at = NOW(),
+        updated_at = NOW()
+    `,
+    transaction`
+      INSERT INTO provider_sync_state (
+        user_id, provider, last_synced_at, provider_total,
+        last_imported_count, last_error_code
+      ) VALUES (${input.userId}, ${input.provider}, NOW(), 1, 1, NULL)
+      ON CONFLICT (user_id, provider) DO UPDATE SET
+        last_synced_at = NOW(),
+        last_imported_count = 1,
+        last_error_code = NULL,
+        updated_at = NOW()
+    `,
+  ]);
+
+  return { created: existingRows.length === 0 };
 }
 
 export async function markProviderSyncError(
