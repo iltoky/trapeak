@@ -198,6 +198,8 @@ const trainingContextSchema = z.object({
     goalsAndRestrictionsAvailable: z.boolean(),
     healthAndMedicationContextAvailable: z.boolean(),
     sleepAvailable: z.literal(false),
+    dailyActivityAvailable: z.literal(false),
+    stressAvailable: z.literal(false),
     recoveryAvailable: z.literal(false),
     limitations: z.array(z.string()),
   }),
@@ -359,7 +361,7 @@ const handler = createMcpHandler(
       {
         title: "Save or update TRAPEAK user profile",
         description:
-          "Create or partially update the authenticated user's own profile only after the user explicitly provides or asks to save the facts. Send only fields discussed in the current request: omitted fields remain unchanged, null clears a field, and an empty list explicitly means none. Store date of birth, never a fixed age. Save weight separately with create_weight_entry so its dated history is preserved. Never infer medical conditions, contraindications, injuries, medication names, dosages, or schedules. Use fieldStatuses when a field is not applicable or the user prefers not to answer, so AI will not ask it repeatedly.",
+          "Create or partially update the authenticated user's own profile only after the user explicitly provides or asks to save the facts. Send only fields discussed in the current request: omitted fields remain unchanged, null clears a field, and an empty list explicitly means none. Store date of birth, never a fixed age. Save weight separately with create_weight_entry so its dated history is preserved. workActivityContext is only qualitative work context that a wearable cannot reliably infer, such as seated, standing, physical, shift, or night work. Do not store manual sleep, daily activity, stress, caffeine, or alcohol fields in Profile. Never infer medical conditions, contraindications, injuries, medication names, dosages, or schedules. Use fieldStatuses when a field is not applicable or the user prefers not to answer, so AI will not ask it repeatedly.",
         inputSchema: z.object({
           profile: userProfilePatchSchema.describe(
             "Only the profile fields explicitly supplied or changed by the user.",
@@ -528,7 +530,7 @@ const handler = createMcpHandler(
       {
         title: "Delete TRAPEAK user profile",
         description:
-          "Permanently delete the authenticated user's custom TRAPEAK profile, including goals, health context, medications, lifestyle, and onboarding progress. This does not delete wearable activities, nutrition, laboratory reports, or the separate weight history. Use only after an explicit request to delete the entire profile.",
+          "Permanently delete the authenticated user's custom TRAPEAK profile, including goals, health context, medications, work context, and onboarding progress. This does not delete wearable activities, nutrition, laboratory reports, or the separate weight history. Use only after an explicit request to delete the entire profile.",
         inputSchema: z.object({ confirm: deletionConfirmationSchema }),
         outputSchema: z.object({ deleted: z.boolean() }),
         annotations: {
@@ -1011,9 +1013,9 @@ const handler = createMcpHandler(
     );
   },
   {
-    serverInfo: { name: "trapeak", version: "0.9.1" },
+    serverInfo: { name: "trapeak", version: "0.9.2" },
     instructions:
-      "TRAPEAK stores authenticated fitness, nutrition, laboratory, dated weight, and custom profile data. For profile onboarding, call get_user_profile first, ask a short grouped questionnaire, and save only facts explicitly provided by the user. Store birthDate rather than fixed age; save exact weight measurements with create_weight_entry, never estimate them. When weightUpdateDue is true, briefly offer to record a new measurement, especially every 14 days for weight-loss goals or every 30 days otherwise. After each profile update, say that the returned percentage is profile completeness rather than a health score and offer the suggested topic groups as optional follow-ups. Never infer medical conditions, contraindications, injuries, medications, dosage, or schedule. Before recommending today's workout, call get_training_context and evaluate the custom profile, previous workouts, accumulated load, and weight context, not only today's data. Explicitly check whether the newest activities contain back-to-back hard, interval, or anaerobic sessions, including when provider TSS is missing. Treat availability flags and limitations as part of the answer. Call create or update tools only after the user explicitly asks to save data. Call deletion tools only after the user explicitly asks to permanently delete the relevant record or entire profile, and pass confirm=true only for that explicit request. Nutrition estimates must include assumptions. Laboratory tools preserve reported values, units, ranges, and flags without inventing missing data or diagnosing conditions. Read and deletion tools may act only on records owned by the authenticated user.",
+      "TRAPEAK stores authenticated fitness, nutrition, laboratory, dated weight, and custom profile data. For profile onboarding, call get_user_profile first, ask a short grouped questionnaire, and save only facts explicitly provided by the user. Store birthDate rather than fixed age; save exact weight measurements with create_weight_entry, never estimate them. Keep only qualitative workActivityContext in Profile. Sleep, daily activity, stress, HRV, readiness, and recovery must come from connected wearable sources when available; do not infer them or store manual substitutes in Profile. Caffeine and alcohol are not permanent Profile fields; a specific consumed drink may be logged as nutrition only after an explicit request. When weightUpdateDue is true, briefly offer to record a new measurement, especially every 14 days for weight-loss goals or every 30 days otherwise. After each profile update, say that the returned percentage is profile completeness rather than a health score and offer the suggested topic groups as optional follow-ups. Never infer medical conditions, contraindications, injuries, medications, dosage, or schedule. Before recommending today's workout, call get_training_context and evaluate the custom profile, previous workouts, accumulated load, and weight context, not only today's data. Explicitly check whether the newest activities contain back-to-back hard, interval, or anaerobic sessions, including when provider TSS is missing. Treat availability flags and limitations as part of the answer. Call create or update tools only after the user explicitly asks to save data. Call deletion tools only after the user explicitly asks to permanently delete the relevant record or entire profile, and pass confirm=true only for that explicit request. Nutrition estimates must include assumptions. Laboratory tools preserve reported values, units, ranges, and flags without inventing missing data or diagnosing conditions. Read and deletion tools may act only on records owned by the authenticated user.",
   },
 );
 

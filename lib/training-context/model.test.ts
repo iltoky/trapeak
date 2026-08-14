@@ -116,6 +116,8 @@ test("groups nutrition by the user's local date and reports missing sources", ()
   assert.equal(context.dataAvailability.activitiesWithHeartRate, 1);
   assert.equal(context.dataAvailability.activitiesWithTrainingStressScore, 0);
   assert.equal(context.dataAvailability.sleepAvailable, false);
+  assert.equal(context.dataAvailability.dailyActivityAvailable, false);
+  assert.equal(context.dataAvailability.stressAvailable, false);
   assert.match(context.dataAvailability.limitations.at(-1) ?? "", /no provider TSS/);
 });
 

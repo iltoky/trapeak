@@ -1,6 +1,6 @@
 # TRP-020 — История веса и напоминания
 
-Статус: **Published; production migration and authenticated MCP e2e pending**
+Статус: **Published; production migration applied; authenticated MCP e2e pending**
 
 ## Description
 
@@ -21,7 +21,7 @@
 
 ## Release Actions
 
-1. Применить production migration `0008_weight_history.sql` после опубликованной `0007_user_profiles.sql`.
+1. [x] Применить production migration `0008_weight_history.sql` после опубликованной `0007_user_profiles.sql`.
 2. [x] Опубликовать MCP `0.9.1`; после миграции открыть новый AI-диалог для обновления schema.
 3. Указать дату рождения через `update_user_profile` и записать точный текущий вес через `create_weight_entry`.
 4. Повторить тот же вызов и убедиться, что `created: false`, ID не изменился и дубль отсутствует.
@@ -37,7 +37,7 @@
 
 ## QA e2e tests
 
-1. [ ] Применить `0008_weight_history.sql` и открыть новый AI-диалог.
+1. [x] Применить `0008_weight_history.sql` и открыть новый AI-диалог.
 2. [ ] Вызвать `get_user_profile`: убедиться, что сохранённый старый вес мигрирован, а дата рождения ещё не угадана.
 3. [ ] Записать новое измерение и повторить идентичный вызов без дубля.
 4. [ ] Проверить фильтры `list_weight_entries`, latest и историю для графика.

@@ -88,6 +88,8 @@ export type TrainingContext = Readonly<{
     goalsAndRestrictionsAvailable: boolean;
     healthAndMedicationContextAvailable: boolean;
     sleepAvailable: false;
+    dailyActivityAvailable: false;
+    stressAvailable: false;
     recoveryAvailable: false;
     limitations: readonly string[];
   }>;
@@ -288,7 +290,7 @@ export function buildTrainingContext(input: Readonly<{
     : false;
   const goalsAndRestrictionsAvailable = goalsAvailable && healthAndMedicationContextAvailable;
   const limitations = [
-    "Connected sleep, HRV, readiness, and recovery measurements are not available yet; a profile sleep schedule is not a current recovery measurement.",
+    "Connected sleep, daily activity, provider stress, HRV, readiness, and recovery measurements are not ingested yet; do not replace them with Profile estimates.",
     "High-load signals use provider TSS >= 80 and do not by themselves classify a workout as anaerobic.",
   ];
   if (!input.userProfile) {
@@ -376,6 +378,8 @@ export function buildTrainingContext(input: Readonly<{
       goalsAndRestrictionsAvailable,
       healthAndMedicationContextAvailable,
       sleepAvailable: false,
+      dailyActivityAvailable: false,
+      stressAvailable: false,
       recoveryAvailable: false,
       limitations,
     },

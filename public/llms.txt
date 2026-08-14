@@ -29,6 +29,7 @@ Product status: production private beta. Authenticated beta users can connect Wa
 - TRAPEAK stores reported laboratory values but does not provide medical diagnosis.
 - Custom profile tools save only user-provided facts, including optional medication details; profile completion is not a health score.
 - Profile stores date of birth rather than fixed age. Weight measurements are a separate dated history with trends and optional update reminders.
+- Profile keeps only durable user-provided context, including qualitative work activity. Sleep, daily activity, provider stress, HRV, readiness, and recovery must come from connected wearable sources; TRAPEAK does not replace missing measurements with AI estimates.
 - Third-party names and trademarks are used descriptively and do not imply endorsement, affiliation, or partnership.
 
 Contact: support@trapeak.com

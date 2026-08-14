@@ -42,7 +42,7 @@ test("counts explicit empty lists and declined fields as completed", () => {
 
   const health = completeness.sections.find(({ key }) => key === "healthAndMedications");
   assert.equal(health?.percent, 100);
-  assert.equal(completeness.percent, 30);
+  assert.equal(completeness.percent, 33);
 });
 
 test("moves to progressive onboarding after the short critical profile is answered", () => {
@@ -76,6 +76,22 @@ test("normalizes a partial stored profile without inventing missing values", () 
   assert.equal(profile.birthDate, "1992-04-20");
   assert.deepEqual(profile.medications, []);
   assert.equal(profile.goals, null);
+});
+
+test("maps legacy work context and drops retired lifestyle fields", () => {
+  const profile = normalizeUserProfile({
+    workPattern: "Mostly seated, occasional night shifts",
+    sleepSchedule: { averageHours: 8 },
+    stressLevel: "moderate",
+    caffeineUse: "Two coffees",
+    alcoholUse: "Rarely",
+  });
+
+  assert.equal(profile.workActivityContext, "Mostly seated, occasional night shifts");
+  assert.equal("sleepSchedule" in profile, false);
+  assert.equal("stressLevel" in profile, false);
+  assert.equal("caffeineUse" in profile, false);
+  assert.equal("alcoholUse" in profile, false);
 });
 
 test("derives age from birth date instead of storing a fixed age", () => {

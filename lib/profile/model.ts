@@ -15,12 +15,7 @@ export const profileStoredFieldKeys = [
   "medications",
   "dietaryRestrictions",
   "nutritionNotes",
-  "sleepSchedule",
-  "dailyActivityLevel",
-  "workPattern",
-  "stressLevel",
-  "caffeineUse",
-  "alcoholUse",
+  "workActivityContext",
   "weeklyAvailability",
   "equipment",
   "weightReminderIntervalDays",
@@ -39,7 +34,7 @@ export const profileSectionKeys = [
   "trainingAndGoals",
   "healthAndMedications",
   "nutrition",
-  "sleepAndLifestyle",
+  "dailyContext",
   "scheduleAndEquipment",
 ] as const;
 
@@ -66,14 +61,6 @@ export const trainingExperienceValues = [
   "advanced",
 ] as const;
 
-export const dailyActivityLevelValues = [
-  "sedentary",
-  "light",
-  "moderate",
-  "high",
-] as const;
-
-export const stressLevelValues = ["low", "moderate", "high", "variable"] as const;
 export const dayOfWeekValues = [
   "monday",
   "tuesday",
@@ -87,7 +74,6 @@ export const timeOfDayValues = ["morning", "daytime", "evening", "flexible"] as 
 
 const optionalText = (maximum: number) => z.string().trim().min(1).max(maximum).nullable();
 const dateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
-const timeSchema = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/);
 const birthDateSchema = dateSchema.refine((value) => {
   const date = new Date(`${value}T00:00:00.000Z`);
   return !Number.isNaN(date.getTime())
@@ -133,13 +119,6 @@ export const profileMedicationSchema = z.object({
   { message: "medication endDate must not be before startDate" },
 );
 
-export const sleepScheduleSchema = z.object({
-  usualBedtime: timeSchema.nullable(),
-  usualWakeTime: timeSchema.nullable(),
-  averageHours: z.number().min(0).max(24).nullable(),
-  quality: z.enum(["poor", "fair", "good", "variable"]).nullable(),
-});
-
 export const weeklyAvailabilitySchema = z.object({
   day: z.enum(dayOfWeekValues),
   preferredTime: z.enum(timeOfDayValues).nullable(),
@@ -163,12 +142,7 @@ const profileShape = {
   medications: z.array(profileMedicationSchema).max(50).nullable(),
   dietaryRestrictions: nullableStringList,
   nutritionNotes: optionalText(2000),
-  sleepSchedule: sleepScheduleSchema.nullable(),
-  dailyActivityLevel: z.enum(dailyActivityLevelValues).nullable(),
-  workPattern: optionalText(1000),
-  stressLevel: z.enum(stressLevelValues).nullable(),
-  caffeineUse: optionalText(500),
-  alcoholUse: optionalText(500),
+  workActivityContext: optionalText(1000),
   weeklyAvailability: z.array(weeklyAvailabilitySchema).max(14).nullable(),
   equipment: nullableStringList,
   weightReminderIntervalDays: z.number().int().min(7).max(90).nullable(),
@@ -228,12 +202,7 @@ export const emptyUserProfile: UserProfile = {
   medications: null,
   dietaryRestrictions: null,
   nutritionNotes: null,
-  sleepSchedule: null,
-  dailyActivityLevel: null,
-  workPattern: null,
-  stressLevel: null,
-  caffeineUse: null,
-  alcoholUse: null,
+  workActivityContext: null,
   weeklyAvailability: null,
   equipment: null,
   weightReminderIntervalDays: null,
@@ -259,8 +228,8 @@ const sections: readonly Readonly<{
     key: "trainingAndGoals",
     title: "Тренировки и цели",
     fields: [
-      { key: "goals", weight: 12 },
-      { key: "trainingExperience", weight: 5 },
+      { key: "goals", weight: 13 },
+      { key: "trainingExperience", weight: 6 },
       { key: "preferredActivities", weight: 4 },
       { key: "trainingPreferences", weight: 4 },
     ],
@@ -270,9 +239,9 @@ const sections: readonly Readonly<{
     title: "Здоровье и препараты",
     fields: [
       { key: "injuries", weight: 8 },
-      { key: "healthConditions", weight: 6 },
-      { key: "contraindications", weight: 7 },
-      { key: "medications", weight: 9 },
+      { key: "healthConditions", weight: 7 },
+      { key: "contraindications", weight: 8 },
+      { key: "medications", weight: 10 },
     ],
   },
   {
@@ -284,23 +253,18 @@ const sections: readonly Readonly<{
     ],
   },
   {
-    key: "sleepAndLifestyle",
-    title: "Сон и образ жизни",
+    key: "dailyContext",
+    title: "Контекст дня и работы",
     fields: [
-      { key: "sleepSchedule", weight: 6 },
-      { key: "dailyActivityLevel", weight: 3 },
-      { key: "workPattern", weight: 2 },
-      { key: "stressLevel", weight: 2 },
-      { key: "caffeineUse", weight: 1 },
-      { key: "alcoholUse", weight: 1 },
+      { key: "workActivityContext", weight: 5 },
     ],
   },
   {
     key: "scheduleAndEquipment",
     title: "Расписание и оборудование",
     fields: [
-      { key: "weeklyAvailability", weight: 6 },
-      { key: "equipment", weight: 4 },
+      { key: "weeklyAvailability", weight: 9 },
+      { key: "equipment", weight: 6 },
     ],
   },
 ];
@@ -318,7 +282,14 @@ const initialFields: readonly ProfileFieldKey[] = [
 ];
 
 export function normalizeUserProfile(value: unknown): UserProfile {
-  const patch = userProfilePatchSchema.parse(value ?? {});
+  const stored = value && typeof value === "object" && !Array.isArray(value)
+    ? value as Record<string, unknown>
+    : {};
+  const compatibleValue = stored.workActivityContext === undefined
+    && typeof stored.workPattern === "string"
+    ? { ...stored, workActivityContext: stored.workPattern }
+    : stored;
+  const patch = userProfilePatchSchema.parse(compatibleValue);
   return userProfileSchema.parse({ ...emptyUserProfile, ...patch });
 }
 
@@ -330,7 +301,10 @@ export function normalizeFieldStatuses(
   }
   const statuses: Partial<Record<ProfileFieldKey, ProfileFieldStatus>> = {};
   for (const field of profileFieldKeys) {
-    const status = (value as Record<string, unknown>)[field];
+    const stored = value as Record<string, unknown>;
+    const status = field === "workActivityContext"
+      ? stored.workActivityContext ?? stored.workPattern
+      : stored[field];
     if (profileFieldStatusValues.includes(status as ProfileFieldStatus)) {
       statuses[field] = status as ProfileFieldStatus;
     }

@@ -11,8 +11,9 @@
 | 6. Labs / Blood Tests | Структурированные лабораторные показатели и история | Production verified |
 | 7. User-controlled deletion | Owner-scoped удаление питания и лабораторных отчётов через AI и dashboard | Published; authenticated deletion e2e pending |
 | 8. Training context | История 14–56 дней, сравнение нагрузки, последовательность тренировок и питание для выбора сегодняшней тренировки | Published; authenticated MCP e2e pending |
-| 9. User Profile | Цели, здоровье, препараты, lifestyle и progressive onboarding через AI | Published; authenticated MCP e2e passed |
-| 10. Weight history | Дата рождения вместо возраста, датированные измерения веса, динамика и напоминания | Published; production migration and authenticated MCP e2e pending |
+| 9. User Profile | Цели, здоровье, препараты, долгоживущий контекст и progressive onboarding через AI | Published; authenticated MCP e2e passed |
+| 10. Weight history | Дата рождения вместо возраста, датированные измерения веса, динамика и напоминания | Published; production migration applied; authenticated MCP e2e pending |
+| 11. Profile data cleanup | Work context без дублирования wearable-метрик и полный каталог таблиц/источников | Implemented; production migration and authenticated MCP e2e pending |
 | Public distribution | Публикация TRAPEAK в каталоге ChatGPT и Codex | Paused by product decision |
 | После MVP | Garmin после API approval, recovery и другие health-источники | Backlog |
 
@@ -30,4 +31,4 @@ OAuth-задача Wahoo описана в [`TRP-011`](../../tasks/TRP-011-wahoo
 
 Автоматическая синхронизация описана в [`TRP-014`](../../tasks/TRP-014-wahoo-webhooks.md), публичная подача OpenAI — в [`TRP-015`](../../tasks/TRP-015-public-openai-plugin.md).
 
-Исторический контекст для рекомендации тренировки описан в [`TRP-018`](../../tasks/TRP-018-training-context.md). Собственный Profile с целями, здоровьем, препаратами, lifestyle и progressive onboarding декомпозирован в [`TRP-019`](../../tasks/TRP-019-user-profile.md), история веса — в [`TRP-020`](../../tasks/TRP-020-weight-history.md). Следующий продуктовый срез — sleep, HRV и recovery sources. Публичная подача OpenAI остаётся подготовленной, но не запускается до отдельного решения владельца продукта.
+Исторический контекст для рекомендации тренировки описан в [`TRP-018`](../../tasks/TRP-018-training-context.md). Собственный Profile с целями, здоровьем, препаратами и progressive onboarding декомпозирован в [`TRP-019`](../../tasks/TRP-019-user-profile.md), история веса — в [`TRP-020`](../../tasks/TRP-020-weight-history.md), а граница между Profile и wearable-данными — в [`TRP-021`](../../tasks/TRP-021-profile-daily-context.md). Следующий продуктовый срез — sleep, daily activity, provider stress, HRV и recovery sources. Публичная подача OpenAI остаётся подготовленной, но не запускается до отдельного решения владельца продукта.
