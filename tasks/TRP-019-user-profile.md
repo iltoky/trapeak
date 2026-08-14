@@ -1,6 +1,6 @@
 # TRP-019 — User Profile и progressive onboarding
 
-Статус: **Implemented; production migration and authenticated MCP e2e pending**
+Статус: **Published; authenticated MCP e2e passed**
 
 ## Description
 
@@ -20,10 +20,11 @@
 - `delete_user_profile` удаляет только custom profile и не затрагивает тренировки, питание и лабораторные отчёты.
 - `get_training_context` включает custom profile и явно сообщает полноту и доступность health/medication context.
 - Результаты Labs остаются отдельными датированными отчётами и не копируются в Profile.
+- Дата рождения и история веса уточнены последующим срезом [TRP-020](TRP-020-weight-history.md).
 
 ## Release Actions
 
-1. Применить миграцию `0007_user_profiles.sql`.
+1. [x] Применить миграцию `0007_user_profiles.sql`.
 2. Опубликовать MCP `0.9.0` и обновить schema в AI-клиенте или открыть новый диалог.
 3. Запустить короткую анкету, сохранить первый профиль и проверить рассчитанный процент.
 4. Дополнить один выбранный раздел и убедиться, что процент изменился, а остальные поля сохранились.
@@ -39,9 +40,9 @@
 
 ## QA e2e tests
 
-1. [ ] В новом AI-диалоге вызвать `get_user_profile` и получить initial onboarding.
-2. [ ] Ответить на короткую анкету и вызвать `update_user_profile`.
-3. [ ] Увидеть процент полноты и выбор следующих тем.
+1. [x] В новом AI-диалоге вызвать `get_user_profile` и получить initial onboarding.
+2. [x] Ответить на короткую анкету и вызвать `update_user_profile`.
+3. [x] Увидеть процент полноты и выбор следующих тем.
 4. [ ] Дополнить «Здоровье и препараты», затем повторно вызвать `get_user_profile`.
 5. [ ] Проверить профиль через `get_training_context` перед рекомендацией тренировки.
 6. [ ] Очистить одно поле без изменения остальных.

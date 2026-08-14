@@ -5,6 +5,7 @@ import {
   isProfileFieldComplete,
   type UserProfileRecord,
 } from "../profile/model.ts";
+import type { WeightStatus } from "../weight/model.ts";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 export const HIGH_LOAD_TSS_THRESHOLD = 80;
@@ -53,6 +54,8 @@ export type TrainingContext = Readonly<{
   historyDays: number;
   profiles: readonly McpAthleteProfile[];
   userProfile: UserProfileRecord | null;
+  profileDerived: Readonly<{ ageYears: number | null }>;
+  weight: WeightStatus;
   recentActivities: readonly TrainingContextActivity[];
   loadWindows: readonly TrainingLoadWindow[];
   sequence: Readonly<{
@@ -204,6 +207,8 @@ export function buildTrainingContext(input: Readonly<{
   historyDays: number;
   profiles: readonly McpAthleteProfile[];
   userProfile: UserProfileRecord | null;
+  profileDerived?: Readonly<{ ageYears: number | null }>;
+  weight?: WeightStatus;
   activities: readonly McpActivityDetails[];
   nutritionEntries: readonly NutritionEntry[];
   activityHistoryTruncated?: boolean;
@@ -264,7 +269,9 @@ export function buildTrainingContext(input: Readonly<{
   const daysSinceLastActivity = latestTrainingDate
     ? dateKeyToEpochDay(todayDate) - dateKeyToEpochDay(latestTrainingDate)
     : null;
-  const profileCompleteness = calculateProfileCompleteness(input.userProfile);
+  const profileCompleteness = calculateProfileCompleteness(input.userProfile, {
+    hasWeightMeasurement: input.weight?.latest !== null && input.weight?.latest !== undefined,
+  });
   const goalsAvailable = input.userProfile
     ? isProfileFieldComplete(input.userProfile, "goals")
     : false;
@@ -298,6 +305,22 @@ export function buildTrainingContext(input: Readonly<{
       "Some activities have no provider TSS; use their type, name, duration, heart rate, and sequence as supporting context.",
     );
   }
+  if (input.weight?.weightUpdateDue) {
+    limitations.push(
+      input.weight.latest
+        ? `The latest weight measurement is ${input.weight.daysSinceLastMeasurement} days old; a new measurement is due.`
+        : "No dated weight measurement is stored; a first measurement is due.",
+    );
+  }
+
+  const weight = input.weight ?? {
+    latest: null,
+    changesKilograms: { days7: null, days30: null, days90: null },
+    reminderIntervalDays: 30,
+    daysSinceLastMeasurement: null,
+    nextSuggestedMeasurementAt: null,
+    weightUpdateDue: true,
+  };
 
   return {
     asOf: input.asOf.toISOString(),
@@ -305,6 +328,8 @@ export function buildTrainingContext(input: Readonly<{
     historyDays: input.historyDays,
     profiles: [...input.profiles],
     userProfile: input.userProfile,
+    profileDerived: input.profileDerived ?? { ageYears: null },
+    weight,
     recentActivities: activities,
     loadWindows: [last7Days, previous7Days, history],
     sequence: {

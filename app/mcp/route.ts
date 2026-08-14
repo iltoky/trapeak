@@ -44,6 +44,15 @@ import {
   userProfilePatchSchema,
   userProfileSchema,
 } from "@/lib/profile/model";
+import {
+  createWeightEntry,
+  deleteWeightEntry,
+  listWeightEntries,
+} from "@/lib/weight/data";
+import {
+  parseWeightEntryInput,
+  weightEntrySources,
+} from "@/lib/weight/model";
 
 const providerSchema = z.enum(["garmin", "suunto", "wahoo"]);
 const nullableNumber = z.number().nullable();
@@ -121,6 +130,26 @@ const trainingNutritionDaySchema = z.object({
   carbohydratesGrams: z.number(),
   fatGrams: z.number(),
 });
+const weightEntrySchema = z.object({
+  id: z.string().uuid(),
+  measuredAt: z.string(),
+  weightKilograms: z.number(),
+  notes: z.string().nullable(),
+  source: z.enum(weightEntrySources),
+});
+const weightStatusSchema = z.object({
+  latest: weightEntrySchema.nullable(),
+  changesKilograms: z.object({
+    days7: nullableNumber,
+    days30: nullableNumber,
+    days90: nullableNumber,
+  }),
+  reminderIntervalDays: z.number().int().min(7).max(90),
+  daysSinceLastMeasurement: z.number().int().nullable(),
+  nextSuggestedMeasurementAt: z.string().nullable(),
+  weightUpdateDue: z.boolean(),
+});
+const profileDerivedSchema = z.object({ ageYears: z.number().int().nullable() });
 const trainingContextSchema = z.object({
   asOf: z.string(),
   utcOffsetMinutes: z.number().int(),
@@ -135,6 +164,8 @@ const trainingContextSchema = z.object({
     createdAt: z.string(),
     updatedAt: z.string(),
   }).nullable(),
+  profileDerived: profileDerivedSchema,
+  weight: weightStatusSchema,
   recentActivities: z.array(trainingContextActivitySchema),
   loadWindows: z.array(trainingLoadWindowSchema),
   sequence: z.object({
@@ -253,6 +284,8 @@ const userProfileRecordSchema = z.object({
 const userProfileResultSchema = z.object({
   userProfile: userProfileRecordSchema.nullable(),
   completeness: profileCompletenessSchema,
+  derived: profileDerivedSchema,
+  weight: weightStatusSchema,
 });
 
 const handler = createMcpHandler(
@@ -308,12 +341,14 @@ const handler = createMcpHandler(
           content: [{
             type: "text",
             text: result.record
-              ? `The user profile is ${result.completeness.percent}% complete. Offer the user a choice of the suggested next topics without implying that this is a health score.`
-              : "No TRAPEAK user profile exists yet. Ask one short grouped questionnaire: (1) primary goal, (2) age, height and weight, (3) usual activities and training experience, (4) active injuries, health restrictions or contraindications, (5) current medications with name, dose and schedule—or an explicit answer that there are none, and (6) available training days, preferred time and maximum duration. Save only the answers provided.",
+              ? `The user profile is ${result.completeness.percent}% complete. Offer the user a choice of the suggested next topics without implying that this is a health score.${result.weight.weightUpdateDue ? " A new exact weight measurement is due; briefly offer to record it." : ""}`
+              : "No TRAPEAK user profile exists yet. Ask one short grouped questionnaire: (1) primary goal, (2) date of birth, height and current weight, (3) usual activities and training experience, (4) active injuries, health restrictions or contraindications, (5) current medications with name, dose and schedule—or an explicit answer that there are none, and (6) available training days, preferred time and maximum duration. Save Profile answers with update_user_profile and save an exact current weight separately with create_weight_entry.",
           }],
           structuredContent: {
             userProfile: result.record,
             completeness: result.completeness,
+            derived: result.derived,
+            weight: result.weight,
           },
         };
       },
@@ -324,7 +359,7 @@ const handler = createMcpHandler(
       {
         title: "Save or update TRAPEAK user profile",
         description:
-          "Create or partially update the authenticated user's own profile only after the user explicitly provides or asks to save the facts. Send only fields discussed in the current request: omitted fields remain unchanged, null clears a field, and an empty list explicitly means none. Never infer medical conditions, contraindications, injuries, medication names, dosages, or schedules. Use fieldStatuses when a field is not applicable or the user prefers not to answer, so AI will not ask it repeatedly.",
+          "Create or partially update the authenticated user's own profile only after the user explicitly provides or asks to save the facts. Send only fields discussed in the current request: omitted fields remain unchanged, null clears a field, and an empty list explicitly means none. Store date of birth, never a fixed age. Save weight separately with create_weight_entry so its dated history is preserved. Never infer medical conditions, contraindications, injuries, medication names, dosages, or schedules. Use fieldStatuses when a field is not applicable or the user prefers not to answer, so AI will not ask it repeatedly.",
         inputSchema: z.object({
           profile: userProfilePatchSchema.describe(
             "Only the profile fields explicitly supplied or changed by the user.",
@@ -362,7 +397,128 @@ const handler = createMcpHandler(
           structuredContent: {
             userProfile: result.record,
             completeness: result.completeness,
+            derived: result.derived,
+            weight: result.weight,
           },
+        };
+      },
+    );
+
+    server.registerTool(
+      "create_weight_entry",
+      {
+        title: "Save a weight measurement",
+        description:
+          "Save one exact, dated weight measurement for the authenticated user after an explicit request to record it. Use the user's stated measurement time, or the current time only when the user says it was measured now. Never estimate weight. Repeating identical input returns the existing record instead of creating a duplicate.",
+        inputSchema: z.object({
+          measuredAt: z.string().datetime({ offset: true }).describe(
+            "Measurement time as ISO 8601 with offset.",
+          ),
+          weightKilograms: z.number().min(20).max(500),
+          notes: z.string().trim().min(1).max(1000).nullable().optional(),
+        }),
+        outputSchema: z.object({
+          id: z.string().uuid(),
+          created: z.boolean(),
+          weight: weightStatusSchema,
+        }),
+        annotations: {
+          readOnlyHint: false,
+          destructiveHint: false,
+          openWorldHint: false,
+          idempotentHint: true,
+        },
+      },
+      async (input, context) => {
+        const userId = requireMcpUserId(context.http?.authInfo);
+        const saved = await createWeightEntry(
+          userId,
+          parseWeightEntryInput(input, "ai"),
+        );
+        const profile = await getUserProfile(userId);
+        return {
+          content: [{
+            type: "text",
+            text: saved.created
+              ? "Weight measurement saved."
+              : "The identical weight measurement was already saved; no duplicate was created.",
+          }],
+          structuredContent: { ...saved, weight: profile.weight },
+        };
+      },
+    );
+
+    server.registerTool(
+      "list_weight_entries",
+      {
+        title: "List weight history",
+        description:
+          "Read the authenticated user's dated weight history for trends and graphs. Optional dates are inclusive. The summary includes the latest measurement, changes using the most recent baseline at or before 7, 30, and 90 days, and whether a new measurement is due.",
+        inputSchema: z.object({
+          from: dateSchema.optional(),
+          to: dateSchema.optional(),
+          limit: z.number().int().min(1).max(500).default(100),
+        }),
+        outputSchema: z.object({
+          entries: z.array(weightEntrySchema),
+          count: z.number().int(),
+          weight: weightStatusSchema,
+        }),
+        annotations: {
+          readOnlyHint: true,
+          destructiveHint: false,
+          openWorldHint: false,
+        },
+      },
+      async (input, context) => {
+        const userId = requireMcpUserId(context.http?.authInfo);
+        const [entries, profile] = await Promise.all([
+          listWeightEntries({ userId, ...input }),
+          getUserProfile(userId),
+        ]);
+        return {
+          content: [{
+            type: "text",
+            text: `Found ${entries.length} weight measurements.`,
+          }],
+          structuredContent: {
+            entries: [...entries],
+            count: entries.length,
+            weight: profile.weight,
+          },
+        };
+      },
+    );
+
+    server.registerTool(
+      "delete_weight_entry",
+      {
+        title: "Delete a weight measurement",
+        description:
+          "Permanently delete one dated weight measurement owned by the authenticated user. Use only after an explicit request to delete that specific record.",
+        inputSchema: z.object({
+          id: z.string().uuid(),
+          confirm: deletionConfirmationSchema,
+        }),
+        outputSchema: z.object({ id: z.string().uuid(), deleted: z.boolean() }),
+        annotations: {
+          readOnlyHint: false,
+          destructiveHint: true,
+          openWorldHint: false,
+          idempotentHint: true,
+        },
+      },
+      async ({ id }, context) => {
+        const userId = requireMcpUserId(context.http?.authInfo);
+        const deleted = await deleteWeightEntry(userId, id);
+        return {
+          content: [{
+            type: "text",
+            text: deleted
+              ? "Weight measurement permanently deleted."
+              : "No weight measurement with that ID is available to this user; nothing was deleted.",
+          }],
+          structuredContent: { id, deleted },
         };
       },
     );
@@ -372,7 +528,7 @@ const handler = createMcpHandler(
       {
         title: "Delete TRAPEAK user profile",
         description:
-          "Permanently delete the authenticated user's custom TRAPEAK profile, including goals, health context, medications, lifestyle, and onboarding progress. This does not delete wearable activities, nutrition, or laboratory reports. Use only after an explicit request to delete the entire profile.",
+          "Permanently delete the authenticated user's custom TRAPEAK profile, including goals, health context, medications, lifestyle, and onboarding progress. This does not delete wearable activities, nutrition, laboratory reports, or the separate weight history. Use only after an explicit request to delete the entire profile.",
         inputSchema: z.object({ confirm: deletionConfirmationSchema }),
         outputSchema: z.object({ deleted: z.boolean() }),
         annotations: {
@@ -402,7 +558,7 @@ const handler = createMcpHandler(
       {
         title: "Get context for today's workout",
         description:
-          "Call this before selecting or building today's workout. It returns the authenticated user's chronological workout history, 7-day versus previous-7-day load, longer history, recent nutrition, and data limitations. Evaluate the sequence of previous workouts, not only today's data. High-load signals use provider TSS and are not a definitive anaerobic classification.",
+          "Call this before selecting or building today's workout. It returns the authenticated user's chronological workout history, 7-day versus previous-7-day load, longer history, recent nutrition, Profile, weight trends and data limitations. Evaluate the sequence of previous workouts, not only today's data. High-load signals use provider TSS and are not a definitive anaerobic classification.",
         inputSchema: z.object({
           asOf: z.string().datetime({ offset: true }).optional().describe(
             "Decision time as an ISO 8601 timestamp with offset. Defaults to the current server time.",
@@ -855,9 +1011,9 @@ const handler = createMcpHandler(
     );
   },
   {
-    serverInfo: { name: "trapeak", version: "0.9.0" },
+    serverInfo: { name: "trapeak", version: "0.9.1" },
     instructions:
-      "TRAPEAK stores authenticated fitness, nutrition, laboratory, and custom profile data. For profile onboarding, call get_user_profile first, ask a short grouped questionnaire, and save only facts explicitly provided by the user. After each update, say that the returned percentage is profile completeness rather than a health score and offer the suggested topic groups as optional follow-ups. Never infer medical conditions, contraindications, injuries, medications, dosage, or schedule. Before recommending today's workout, call get_training_context and evaluate the custom profile, previous workouts, and accumulated load, not only today's data. Explicitly check whether the newest activities contain back-to-back hard, interval, or anaerobic sessions, including when provider TSS is missing. Treat availability flags and limitations as part of the answer. Call create or update tools only after the user explicitly asks to save data. Call deletion tools only after the user explicitly asks to permanently delete the relevant record or entire profile, and pass confirm=true only for that explicit request. Nutrition estimates must include assumptions. Laboratory tools preserve reported values, units, ranges, and flags without inventing missing data or diagnosing conditions. Read and deletion tools may act only on records owned by the authenticated user.",
+      "TRAPEAK stores authenticated fitness, nutrition, laboratory, dated weight, and custom profile data. For profile onboarding, call get_user_profile first, ask a short grouped questionnaire, and save only facts explicitly provided by the user. Store birthDate rather than fixed age; save exact weight measurements with create_weight_entry, never estimate them. When weightUpdateDue is true, briefly offer to record a new measurement, especially every 14 days for weight-loss goals or every 30 days otherwise. After each profile update, say that the returned percentage is profile completeness rather than a health score and offer the suggested topic groups as optional follow-ups. Never infer medical conditions, contraindications, injuries, medications, dosage, or schedule. Before recommending today's workout, call get_training_context and evaluate the custom profile, previous workouts, accumulated load, and weight context, not only today's data. Explicitly check whether the newest activities contain back-to-back hard, interval, or anaerobic sessions, including when provider TSS is missing. Treat availability flags and limitations as part of the answer. Call create or update tools only after the user explicitly asks to save data. Call deletion tools only after the user explicitly asks to permanently delete the relevant record or entire profile, and pass confirm=true only for that explicit request. Nutrition estimates must include assumptions. Laboratory tools preserve reported values, units, ranges, and flags without inventing missing data or diagnosing conditions. Read and deletion tools may act only on records owned by the authenticated user.",
   },
 );
 

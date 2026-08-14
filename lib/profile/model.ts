@@ -1,10 +1,9 @@
 import { z } from "zod";
 
-export const profileFieldKeys = [
-  "ageYears",
+export const profileStoredFieldKeys = [
+  "birthDate",
   "biologicalSex",
   "heightCentimeters",
-  "weightKilograms",
   "timeZone",
   "goals",
   "trainingExperience",
@@ -24,8 +23,15 @@ export const profileFieldKeys = [
   "alcoholUse",
   "weeklyAvailability",
   "equipment",
+  "weightReminderIntervalDays",
 ] as const;
 
+export const profileFieldKeys = [
+  ...profileStoredFieldKeys.filter((field) => field !== "weightReminderIntervalDays"),
+  "weightHistory",
+] as const;
+
+export type ProfileStoredFieldKey = (typeof profileStoredFieldKeys)[number];
 export type ProfileFieldKey = (typeof profileFieldKeys)[number];
 
 export const profileSectionKeys = [
@@ -82,6 +88,13 @@ export const timeOfDayValues = ["morning", "daytime", "evening", "flexible"] as 
 const optionalText = (maximum: number) => z.string().trim().min(1).max(maximum).nullable();
 const dateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 const timeSchema = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/);
+const birthDateSchema = dateSchema.refine((value) => {
+  const date = new Date(`${value}T00:00:00.000Z`);
+  return !Number.isNaN(date.getTime())
+    && date.toISOString().slice(0, 10) === value
+    && calculateAgeYears(value) >= 13
+    && calculateAgeYears(value) <= 120;
+}, { message: "birthDate must be a valid date for an age between 13 and 120" });
 
 export const profileGoalSchema = z.object({
   type: z.enum([
@@ -136,10 +149,9 @@ export const weeklyAvailabilitySchema = z.object({
 const nullableStringList = z.array(z.string().trim().min(1).max(200)).max(50).nullable();
 
 const profileShape = {
-  ageYears: z.number().int().min(13).max(120).nullable(),
+  birthDate: birthDateSchema.nullable(),
   biologicalSex: z.enum(biologicalSexValues).nullable(),
   heightCentimeters: z.number().min(80).max(260).nullable(),
-  weightKilograms: z.number().min(20).max(500).nullable(),
   timeZone: optionalText(100),
   goals: z.array(profileGoalSchema).max(10).nullable(),
   trainingExperience: z.enum(trainingExperienceValues).nullable(),
@@ -159,6 +171,7 @@ const profileShape = {
   alcoholUse: optionalText(500),
   weeklyAvailability: z.array(weeklyAvailabilitySchema).max(14).nullable(),
   equipment: nullableStringList,
+  weightReminderIntervalDays: z.number().int().min(7).max(90).nullable(),
 };
 
 export const userProfileSchema = z.object(profileShape);
@@ -201,10 +214,9 @@ export type ProfileCompleteness = Readonly<{
 }>;
 
 export const emptyUserProfile: UserProfile = {
-  ageYears: null,
+  birthDate: null,
   biologicalSex: null,
   heightCentimeters: null,
-  weightKilograms: null,
   timeZone: null,
   goals: null,
   trainingExperience: null,
@@ -224,6 +236,7 @@ export const emptyUserProfile: UserProfile = {
   alcoholUse: null,
   weeklyAvailability: null,
   equipment: null,
+  weightReminderIntervalDays: null,
 };
 
 const sections: readonly Readonly<{
@@ -235,10 +248,10 @@ const sections: readonly Readonly<{
     key: "basics",
     title: "Основные данные",
     fields: [
-      { key: "ageYears", weight: 3 },
+      { key: "birthDate", weight: 3 },
       { key: "biologicalSex", weight: 2 },
       { key: "heightCentimeters", weight: 2 },
-      { key: "weightKilograms", weight: 2 },
+      { key: "weightHistory", weight: 2 },
       { key: "timeZone", weight: 1 },
     ],
   },
@@ -293,9 +306,9 @@ const sections: readonly Readonly<{
 ];
 
 const initialFields: readonly ProfileFieldKey[] = [
-  "ageYears",
+  "birthDate",
   "heightCentimeters",
-  "weightKilograms",
+  "weightHistory",
   "goals",
   "trainingExperience",
   "injuries",
@@ -328,17 +341,24 @@ export function normalizeFieldStatuses(
 export function isProfileFieldComplete(
   record: Pick<UserProfileRecord, "profile" | "fieldStatuses">,
   field: ProfileFieldKey,
+  options: Readonly<{ hasWeightMeasurement?: boolean }> = {},
 ): boolean {
+  if (field === "weightHistory") {
+    return options.hasWeightMeasurement === true
+      || record.fieldStatuses.weightHistory !== undefined;
+  }
   return record.profile[field] !== null || record.fieldStatuses[field] !== undefined;
 }
 
 export function calculateProfileCompleteness(
   record: Pick<UserProfileRecord, "profile" | "fieldStatuses"> | null,
+  options: Readonly<{ hasWeightMeasurement?: boolean }> = {},
 ): ProfileCompleteness {
   const normalized = record ?? { profile: emptyUserProfile, fieldStatuses: {} };
   const sectionResults = sections.map((section): ProfileSectionCompleteness => {
     const completedWeight = section.fields.reduce(
-      (total, field) => total + (isProfileFieldComplete(normalized, field.key) ? field.weight : 0),
+      (total, field) => total
+        + (isProfileFieldComplete(normalized, field.key, options) ? field.weight : 0),
       0,
     );
     const totalWeight = section.fields.reduce((total, field) => total + field.weight, 0);
@@ -349,7 +369,7 @@ export function calculateProfileCompleteness(
       completedWeight,
       totalWeight,
       missingFields: section.fields
-        .filter((field) => !isProfileFieldComplete(normalized, field.key))
+        .filter((field) => !isProfileFieldComplete(normalized, field.key, options))
         .map((field) => field.key),
     };
   });
@@ -357,7 +377,9 @@ export function calculateProfileCompleteness(
     (total, section) => total + section.completedWeight,
     0,
   );
-  const initialComplete = initialFields.every((field) => isProfileFieldComplete(normalized, field));
+  const initialComplete = initialFields.every(
+    (field) => isProfileFieldComplete(normalized, field, options),
+  );
   const stage = completedWeight === 100
     ? "complete"
     : initialComplete
@@ -375,4 +397,15 @@ export function calculateProfileCompleteness(
       .slice(0, 3)
       .map(({ key, title, percent, missingFields }) => ({ key, title, percent, missingFields })),
   };
+}
+
+export function calculateAgeYears(birthDate: string, asOf: Date = new Date()): number {
+  const [year, month, day] = birthDate.split("-").map(Number);
+  let age = asOf.getUTCFullYear() - year;
+  const beforeBirthday = asOf.getUTCMonth() + 1 < month
+    || (asOf.getUTCMonth() + 1 === month && asOf.getUTCDate() < day);
+  if (beforeBirthday) {
+    age -= 1;
+  }
+  return age;
 }

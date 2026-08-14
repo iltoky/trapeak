@@ -3,15 +3,19 @@ import "server-only";
 import { getDatabase } from "../db/client";
 import {
   calculateProfileCompleteness,
+  calculateAgeYears,
   normalizeFieldStatuses,
   normalizeUserProfile,
   type ProfileCompleteness,
   type ProfileFieldStatus,
   type ProfileFieldStatusUpdate,
   type ProfileFieldKey,
+  type ProfileStoredFieldKey,
   type UserProfilePatch,
   type UserProfileRecord,
 } from "./model";
+import { getWeightStatus } from "../weight/data";
+import type { WeightStatus } from "../weight/model";
 
 type UserProfileRow = Readonly<{
   profile: unknown;
@@ -23,6 +27,8 @@ type UserProfileRow = Readonly<{
 export type UserProfileResult = Readonly<{
   record: UserProfileRecord | null;
   completeness: ProfileCompleteness;
+  derived: Readonly<{ ageYears: number | null }>;
+  weight: WeightStatus;
 }>;
 
 function toRecord(row: UserProfileRow): UserProfileRecord {
@@ -43,7 +49,10 @@ function isMissingProfileTable(error: unknown): boolean {
   );
 }
 
-export async function getUserProfile(userId: string): Promise<UserProfileResult> {
+export async function getUserProfile(
+  userId: string,
+  asOf: Date = new Date(),
+): Promise<UserProfileResult> {
   const sql = getDatabase();
   let rows: UserProfileRow[];
   try {
@@ -55,12 +64,37 @@ export async function getUserProfile(userId: string): Promise<UserProfileResult>
     ` as UserProfileRow[];
   } catch (error) {
     if (isMissingProfileTable(error)) {
-      return { record: null, completeness: calculateProfileCompleteness(null) };
+      const weight = await getWeightStatus({ userId, asOf });
+      return {
+        record: null,
+        completeness: calculateProfileCompleteness(null, {
+          hasWeightMeasurement: weight.latest !== null,
+        }),
+        derived: { ageYears: null },
+        weight,
+      };
     }
     throw error;
   }
   const record = rows[0] ? toRecord(rows[0]) : null;
-  return { record, completeness: calculateProfileCompleteness(record) };
+  const weight = await getWeightStatus({
+    userId,
+    asOf,
+    goals: record?.profile.goals,
+    configuredIntervalDays: record?.profile.weightReminderIntervalDays,
+  });
+  return {
+    record,
+    completeness: calculateProfileCompleteness(record, {
+      hasWeightMeasurement: weight.latest !== null,
+    }),
+    derived: {
+      ageYears: record?.profile.birthDate
+        ? calculateAgeYears(record.profile.birthDate, asOf)
+        : null,
+    },
+    weight,
+  };
 }
 
 export async function updateUserProfile(input: Readonly<{
@@ -70,17 +104,21 @@ export async function updateUserProfile(input: Readonly<{
 }>): Promise<UserProfileResult> {
   const sql = getDatabase();
   const normalizedPatch = normalizeUserProfile(input.patch);
-  const explicitPatchKeys = Object.keys(input.patch) as ProfileFieldKey[];
+  const explicitPatchKeys = Object.keys(input.patch) as ProfileStoredFieldKey[];
+  const explicitPatchKeySet = new Set<string>(explicitPatchKeys);
   const submittedStatuses = Object.fromEntries(
     (input.fieldStatuses ?? [])
-      .filter(({ field }) => !explicitPatchKeys.includes(field))
+      .filter(({ field }) => !explicitPatchKeySet.has(field))
       .map(({ field, status }) => [field, status]),
   ) as Partial<Record<ProfileFieldKey, ProfileFieldStatus>>;
   const statusKeys = Object.keys(submittedStatuses) as ProfileFieldKey[];
   const updatedKeys = [...new Set([...explicitPatchKeys, ...statusKeys])];
+  const storedStatusKeys = statusKeys.filter(
+    (key): key is Exclude<ProfileFieldKey, "weightHistory"> => key !== "weightHistory",
+  );
   const patchDocument = Object.fromEntries([
     ...explicitPatchKeys.map((key) => [key, normalizedPatch[key]]),
-    ...statusKeys.map((key) => [key, null]),
+    ...storedStatusKeys.map((key) => [key, null]),
   ]);
   const rows = await sql`
     INSERT INTO user_profiles (user_id, profile, field_statuses)
@@ -96,8 +134,7 @@ export async function updateUserProfile(input: Readonly<{
       updated_at = NOW()
     RETURNING profile, field_statuses, created_at, updated_at
   ` as UserProfileRow[];
-  const record = toRecord(rows[0]);
-  return { record, completeness: calculateProfileCompleteness(record) };
+  return getUserProfile(input.userId);
 }
 
 export async function deleteUserProfile(userId: string): Promise<boolean> {

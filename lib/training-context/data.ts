@@ -22,7 +22,7 @@ export async function getTrainingContext(input: Readonly<{
   const nutritionFrom = new Date(input.asOf.getTime() - 7 * DAY_MS);
   const [profiles, userProfileResult, activityRows, nutritionRows] = await Promise.all([
     getMcpAthleteProfiles(input.userId),
-    getUserProfile(input.userId),
+    getUserProfile(input.userId, input.asOf),
     listMcpActivityDetailsBetween({
       userId: input.userId,
       from: historyFrom,
@@ -43,6 +43,8 @@ export async function getTrainingContext(input: Readonly<{
     historyDays: input.historyDays,
     profiles,
     userProfile: userProfileResult.record,
+    profileDerived: userProfileResult.derived,
+    weight: userProfileResult.weight,
     activities: activityRows.slice(0, ACTIVITY_LIMIT),
     nutritionEntries: nutritionRows.slice(0, NUTRITION_LIMIT),
     activityHistoryTruncated: activityRows.length > ACTIVITY_LIMIT,

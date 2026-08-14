@@ -3,6 +3,7 @@ import test from "node:test";
 
 import {
   calculateProfileCompleteness,
+  calculateAgeYears,
   emptyUserProfile,
   normalizeUserProfile,
   profileMedicationSchema,
@@ -46,9 +47,8 @@ test("counts explicit empty lists and declined fields as completed", () => {
 
 test("moves to progressive onboarding after the short critical profile is answered", () => {
   const completeness = calculateProfileCompleteness(record({
-    ageYears: 34,
+    birthDate: "1992-04-20",
     heightCentimeters: 185,
-    weightKilograms: 94,
     goals: [{
       type: "running_distance",
       description: "Run 10 km comfortably",
@@ -63,7 +63,7 @@ test("moves to progressive onboarding after the short critical profile is answer
       preferredTime: "evening",
       maxDurationMinutes: 60,
     }],
-  }));
+  }), { hasWeightMeasurement: true });
 
   assert.equal(completeness.stage, "progressive");
   assert.ok(completeness.percent > 50);
@@ -71,11 +71,16 @@ test("moves to progressive onboarding after the short critical profile is answer
 });
 
 test("normalizes a partial stored profile without inventing missing values", () => {
-  const profile = normalizeUserProfile({ ageYears: 34, medications: [] });
+  const profile = normalizeUserProfile({ birthDate: "1992-04-20", medications: [] });
 
-  assert.equal(profile.ageYears, 34);
+  assert.equal(profile.birthDate, "1992-04-20");
   assert.deepEqual(profile.medications, []);
   assert.equal(profile.goals, null);
+});
+
+test("derives age from birth date instead of storing a fixed age", () => {
+  assert.equal(calculateAgeYears("1992-08-15", new Date("2026-08-14T12:00:00Z")), 33);
+  assert.equal(calculateAgeYears("1992-08-14", new Date("2026-08-14T12:00:00Z")), 34);
 });
 
 test("validates medication dates and preserves dose details", () => {

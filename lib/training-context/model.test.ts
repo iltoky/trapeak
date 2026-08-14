@@ -161,11 +161,28 @@ test("includes custom goals, health context, and medications", () => {
       createdAt: "2026-08-14T07:00:00.000Z",
       updatedAt: "2026-08-14T07:00:00.000Z",
     },
+    profileDerived: { ageYears: 34 },
+    weight: {
+      latest: {
+        id: "00000000-0000-4000-8000-000000000020",
+        measuredAt: "2026-08-14T06:00:00.000Z",
+        weightKilograms: 90,
+        notes: null,
+        source: "ai",
+      },
+      changesKilograms: { days7: -0.5, days30: -2, days90: null },
+      reminderIntervalDays: 30,
+      daysSinceLastMeasurement: 0,
+      nextSuggestedMeasurementAt: "2026-09-13T06:00:00.000Z",
+      weightUpdateDue: false,
+    },
     activities: [],
     nutritionEntries: [],
   });
 
   assert.equal(context.userProfile?.profile.medications?.[0]?.dosage, "10 mg");
+  assert.equal(context.profileDerived.ageYears, 34);
+  assert.equal(context.weight.latest?.weightKilograms, 90);
   assert.equal(context.dataAvailability.userProfileAvailable, true);
   assert.equal(context.dataAvailability.goalsAndRestrictionsAvailable, true);
   assert.equal(context.dataAvailability.healthAndMedicationContextAvailable, true);
