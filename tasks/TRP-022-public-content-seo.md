@@ -1,6 +1,6 @@
 # TRP-022 — Актуализация публичных материалов и SEO
 
-Статус: **Implementation complete; publication and production verification pending**
+Статус: **Published; public production verification passed; authenticated e2e deferred**
 
 ## Description
 
