@@ -1,24 +1,15 @@
-import { UserButton } from "@clerk/nextjs";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 
+import { listOwnedDataAccessGrants } from "@/lib/access/data";
 import { isAuthConfigured } from "@/lib/auth/config";
 import { requireAuthUser } from "@/lib/auth/current-user";
 import { getProviderConnectionSummary } from "@/lib/integrations/connections";
 import { getProviderDataSummary } from "@/lib/integrations/provider-data";
-import { isWahooWebhookConfigured } from "@/lib/integrations/wahoo/config";
-import { listLabReports, type LabReportSummary } from "@/lib/labs/data";
-import {
-  getNutritionDaySummaries,
-  listNutritionEntries,
-  type NutritionDaySummary,
-  type NutritionEntry,
-} from "@/lib/nutrition/data";
-import { SiteHeader } from "../site-header";
-import { DeleteForm } from "./delete-form";
+import { listLabReports } from "@/lib/labs/data";
+import { getTrainingContext } from "@/lib/training-context/data";
 
-export const metadata = { title: "Account" };
-
-const wahooMessages: Readonly<Record<string, string>> = {
+const notices: Readonly<Record<string, string>> = {
   connected: "Wahoo connected successfully.",
   disconnected: "Wahoo disconnected.",
   denied: "Wahoo authorization was cancelled.",
@@ -27,277 +18,92 @@ const wahooMessages: Readonly<Record<string, string>> = {
   error: "Wahoo could not be connected. Please try again.",
   disconnect_error: "Wahoo could not be disconnected. Please try again.",
   not_connected: "Connect Wahoo before synchronizing workout data.",
-  reconnect_required: "Wahoo access expired. Reconnect Wahoo to continue syncing.",
+  reconnect_required: "Wahoo access expired. Reconnect to continue syncing.",
   sync_error: "Wahoo data could not be synchronized. Please try again.",
 };
 
-const nutritionMessages: Readonly<Record<string, string>> = {
-  created: "Nutrition entry saved.",
-  deleted: "Nutrition entry deleted.",
-  not_found: "Nutrition entry was not found or was already deleted.",
-  invalid: "Check the nutrition fields and try again.",
-  storage_error: "Nutrition storage is not available yet.",
-};
-
-const labMessages: Readonly<Record<string, string>> = {
-  deleted: "Laboratory report and its results were deleted.",
-  not_found: "Laboratory report was not found or was already deleted.",
-  storage_error: "Laboratory storage is not available yet.",
-};
-
-function formatSyncTime(value: Date): string {
-  return `${new Intl.DateTimeFormat("en-GB", {
-    dateStyle: "medium",
-    timeStyle: "short",
-    timeZone: "UTC",
-  }).format(value)} UTC`;
+function valueOf<T>(result: PromiseSettledResult<T>): T | null {
+  return result.status === "fulfilled" ? result.value : null;
 }
 
-function formatRecordTime(value: string): string {
-  return `${new Intl.DateTimeFormat("en-GB", {
-    dateStyle: "medium",
-    timeStyle: "short",
-    timeZone: "UTC",
-  }).format(new Date(value))} UTC`;
+function compactDate(value: string): string {
+  return new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short" }).format(new Date(value));
 }
 
-export default async function DashboardPage({
-  searchParams,
-}: {
-  searchParams: Promise<{
-    wahoo?: string;
-    received?: string;
-    created?: string;
-    updated?: string;
-    nutrition?: string;
-    labs?: string;
-  }>;
+function formatDuration(seconds: number): string {
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.round((seconds % 3600) / 60);
+  return hours ? `${hours}h ${minutes}m` : `${minutes}m`;
+}
+
+export default async function DashboardPage({ searchParams }: {
+  searchParams: Promise<{ wahoo?: string; received?: string; created?: string; updated?: string }>;
 }) {
-  if (!isAuthConfigured()) {
-    redirect("/sign-in?setup=required");
-  }
-
+  if (!isAuthConfigured()) redirect("/sign-in?setup=required");
   const user = await requireAuthUser();
-  const {
-    wahoo: result,
-    received,
-    created,
-    updated,
-    nutrition,
-    labs,
-  } = await searchParams;
-  let storageReady = true;
-  let connection = null;
-  try {
-    connection = await getProviderConnectionSummary(user.id, "wahoo");
-  } catch {
-    storageReady = false;
-  }
-  let dataStorageReady = true;
-  let dataSummary = null;
-  if (connection?.status === "connected") {
-    try {
-      dataSummary = await getProviderDataSummary(user.id, "wahoo");
-    } catch {
-      dataStorageReady = false;
-    }
-  }
-  const notice = result === "synced"
-    ? `Wahoo synchronized successfully. ${Number(received) || 0} received; ${Number(created) || 0} new; ${Number(updated) || 0} updated; ${dataSummary?.storedActivityCount ?? 0} stored.`
-    : result
-      ? wahooMessages[result]
-      : undefined;
-  const automaticSyncEnabled = isWahooWebhookConfigured();
-  const today = new Date().toISOString().slice(0, 10);
-  let nutritionStorageReady = true;
-  let nutritionEntries: readonly NutritionEntry[] | null = null;
-  let todayNutrition: NutritionDaySummary | null = null;
-  let labStorageReady = true;
-  let labReports: readonly LabReportSummary[] | null = null;
-  const [nutritionResult, labResult] = await Promise.allSettled([
-    Promise.all([
-      listNutritionEntries({ userId: user.id, limit: 10 }),
-      getNutritionDaySummaries({ userId: user.id, from: today, to: today }),
-    ]),
-    listLabReports({ userId: user.id, limit: 10 }),
+  const now = new Date();
+  const [contextResult, labsResult, connectionResult, dataResult, grantsResult] = await Promise.allSettled([
+    getTrainingContext({ userId: user.id, asOf: now, utcOffsetMinutes: 0, historyDays: 28 }),
+    listLabReports({ userId: user.id, limit: 1 }),
+    getProviderConnectionSummary(user.id, "wahoo"),
+    getProviderDataSummary(user.id, "wahoo"),
+    listOwnedDataAccessGrants(user.id),
   ]);
-  if (nutritionResult.status === "fulfilled") {
-    nutritionEntries = nutritionResult.value[0];
-    todayNutrition = nutritionResult.value[1][0] ?? null;
-  } else {
-    nutritionStorageReady = false;
-  }
-  if (labResult.status === "fulfilled") {
-    labReports = labResult.value;
-  } else {
-    labStorageReady = false;
-  }
-  const nutritionNotice = nutrition ? nutritionMessages[nutrition] : undefined;
-  const labNotice = labs ? labMessages[labs] : undefined;
-  const accountNotice = labNotice ?? nutritionNotice ?? notice;
+  const context = valueOf(contextResult);
+  const labs = valueOf(labsResult);
+  const connection = valueOf(connectionResult);
+  const data = valueOf(dataResult);
+  const grants = valueOf(grantsResult);
+  const latestWorkout = context?.recentActivities[0] ?? null;
+  const last7 = context?.loadWindows.find(({ label }) => label === "last7Days") ?? null;
+  const todayNutrition = context?.nutrition.today ?? null;
+  const latestLab = labs?.[0] ?? null;
+  const activeGrantCount = grants?.filter(({ status, expiresAt }) =>
+    (status === "active" || status === "pending") && Date.parse(expiresAt) > now.getTime(),
+  ).length ?? 0;
+  const params = await searchParams;
+  const notice = params.wahoo === "synced"
+    ? `Wahoo synchronized: ${Number(params.received) || 0} received, ${Number(params.created) || 0} new, ${Number(params.updated) || 0} updated.`
+    : params.wahoo ? notices[params.wahoo] : null;
 
-  return (
-    <main className="account-page">
-      <SiteHeader />
-      <section className="account shell">
-        <div>
-          <p className="section-index">YOUR ACCOUNT</p>
-          <h1>Connections.</h1>
-          <p>
-            Signed in as {user.email ?? "a verified TRAPEAK user"}.
-          </p>
-        </div>
-        <UserButton />
-        {accountNotice ? (
-          <p className="account-notice" role="status">
-            {accountNotice}
-          </p>
-        ) : null}
-        <div className="account-empty">
-          <span>01</span>
-          <div>
-            <h2>
-              {connection?.status === "connected"
-                ? "Wahoo connected"
-                : connection?.status === "reconnect_required"
-                  ? "Reconnect Wahoo"
-                  : "Connect Wahoo"}
-            </h2>
-            {connection?.status === "connected" ? (
-              <>
-                <p>
-                  Connected as {connection.displayName ?? `Wahoo user ${connection.providerUserId}`}.
-                </p>
-                {dataSummary ? (
-                  <p className="account-sync-status">
-                    {dataSummary.storedActivityCount} completed workouts stored.
-                    Last sync: {formatSyncTime(dataSummary.lastSyncedAt)}.
-                    {automaticSyncEnabled ? " New completed workouts sync automatically." : ""}
-                  </p>
-                ) : null}
-                {dataStorageReady ? (
-                  <form action="/api/integrations/wahoo/sync" method="post">
-                    <button className="button black" type="submit">
-                      Sync Wahoo data
-                    </button>
-                  </form>
-                ) : (
-                  <p className="account-setup">
-                    Workout sync storage is not configured yet.
-                  </p>
-                )}
-                <form action="/api/integrations/wahoo/disconnect" method="post">
-                  <button className="button black" type="submit">
-                    Disconnect Wahoo
-                  </button>
-                </form>
-              </>
-            ) : (
-              <>
-                <p>
-                  {connection?.status === "reconnect_required"
-                    ? "Reconnect to restore workout synchronization."
-                    : "Import authorized workout data from Wahoo for MCP-compatible AI assistants."}
-                </p>
-                {storageReady ? (
-                  <a className="button black" href="/api/integrations/wahoo/connect">
-                    Connect Wahoo
-                  </a>
-                ) : (
-                  <p className="account-setup">Integration storage is not configured yet.</p>
-                )}
-              </>
-            )}
-          </div>
-        </div>
-        <div className="account-empty nutrition-section">
-          <span>02</span>
-          <div>
-            <h2>Nutrition</h2>
-            <p>
-              Ask your connected AI assistant to calculate and save meals. TRAPEAK keeps the description, total calories, macros, and estimation assumptions.
-            </p>
-            {nutritionStorageReady ? (
-              <>
-                {todayNutrition ? (
-                  <div className="nutrition-summary" aria-label="Today's nutrition totals">
-                    <b>{todayNutrition.caloriesKilocalories} kcal</b>
-                    <span>{todayNutrition.proteinGrams} g protein</span>
-                    <span>{todayNutrition.carbohydratesGrams} g carbs</span>
-                    <span>{todayNutrition.fatGrams} g fat</span>
-                  </div>
-                ) : (
-                  <p className="account-sync-status">No meals logged today.</p>
-                )}
-                <p className="account-sync-status">
-                  Example: “Save breakfast: 2 eggs, 2 sausages and an avocado.”
-                </p>
-                {nutritionEntries && nutritionEntries.length > 0 ? (
-                  <div className="nutrition-list">
-                    <h3>Recent entries</h3>
-                    {nutritionEntries.map((entry) => (
-                      <article key={entry.id}>
-                        <div>
-                          <b>{entry.description}</b>
-                          <small>{entry.mealType} · {formatRecordTime(entry.consumedAt)}</small>
-                          <span>
-                            {entry.caloriesKilocalories} kcal · P {entry.proteinGrams} g · C {entry.carbohydratesGrams} g · F {entry.fatGrams} g
-                          </span>
-                          {entry.estimated && entry.estimationNotes ? (
-                            <small>Estimated: {entry.estimationNotes}</small>
-                          ) : null}
-                        </div>
-                        <DeleteForm
-                          action={`/api/nutrition/${entry.id}/delete`}
-                          confirmation={`Permanently delete “${entry.description}”?`}
-                        />
-                      </article>
-                    ))}
-                  </div>
-                ) : null}
-              </>
-            ) : (
-              <p className="account-setup">Run the Nutrition database migration to enable meal logging.</p>
-            )}
-          </div>
-        </div>
-        <div className="account-empty nutrition-section">
-          <span>03</span>
-          <div>
-            <h2>Laboratory reports</h2>
-            <p>
-              Ask your connected AI assistant to save structured laboratory results. Deleting a report also permanently deletes all indicators stored inside it.
-            </p>
-            {labStorageReady ? (
-              labReports && labReports.length > 0 ? (
-                <div className="nutrition-list">
-                  <h3>Recent reports</h3>
-                  {labReports.map((report) => (
-                    <article key={report.id}>
-                      <div>
-                        <b>{report.title}</b>
-                        <small>{report.testType} · {formatRecordTime(report.collectedAt)}</small>
-                        <span>
-                          {report.resultCount} results
-                          {report.laboratory ? ` · ${report.laboratory}` : ""}
-                        </span>
-                      </div>
-                      <DeleteForm
-                        action={`/api/labs/${report.id}/delete`}
-                        confirmation={`Permanently delete “${report.title}” and all ${report.resultCount} stored results?`}
-                      />
-                    </article>
-                  ))}
-                </div>
-              ) : (
-                <p className="account-sync-status">No laboratory reports stored yet.</p>
-              )
-            ) : (
-              <p className="account-setup">Run the Labs database migration to enable laboratory reports.</p>
-            )}
-          </div>
-        </div>
-      </section>
-    </main>
-  );
+  return <div className="dashboard-content">
+    <header className="dashboard-hero">
+      <div><p className="section-index">OVERVIEW</p><h1>Your data,<br />organized.</h1></div>
+      <p>See the context that a connected AI—or a person you authorize—can use. Detailed records stay inside their own category.</p>
+    </header>
+    {notice ? <p className="dashboard-notice" role="status">{notice}</p> : null}
+
+    <section className="summary-grid" aria-label="Data overview">
+      <Link href="/dashboard/training" className="summary-card feature-card">
+        <small>TRAINING</small><strong>{latestWorkout ? latestWorkout.activityTypeName ?? latestWorkout.name ?? "Workout" : "No workouts"}</strong>
+        <p>{latestWorkout ? `${compactDate(latestWorkout.startedAt)} · ${latestWorkout.durationSeconds ? formatDuration(latestWorkout.durationSeconds) : "duration unavailable"}` : "Connect Wahoo to start a structured training history."}</p>
+        <span>{last7 ? `${last7.activityCount} activities · ${formatDuration(last7.durationSeconds)} in 7 days` : "Open training →"}</span>
+      </Link>
+      <Link href="/dashboard/nutrition" className="summary-card">
+        <small>NUTRITION · TODAY</small><strong>{todayNutrition ? `${todayNutrition.caloriesKilocalories} kcal` : "Nothing logged"}</strong>
+        <p>{todayNutrition ? `${todayNutrition.proteinGrams} g protein · ${todayNutrition.carbohydratesGrams} g carbs · ${todayNutrition.fatGrams} g fat` : "Record food by voice or text through your connected AI."}</p><span>Open nutrition →</span>
+      </Link>
+      <Link href="/dashboard/health" className="summary-card">
+        <small>HEALTH</small><strong>{latestLab ? latestLab.title : "No lab reports"}</strong>
+        <p>{latestLab ? `${latestLab.resultCount} stored results · ${compactDate(latestLab.collectedAt)}` : "Health stays separate from training and nutrition access."}</p><span>Open health →</span>
+      </Link>
+      <article className="summary-card">
+        <small>PROFILE CONTEXT</small><strong>{context ? `${context.dataAvailability.profileCompletenessPercent}%` : "Unavailable"}</strong>
+        <p>Goals, constraints and preferences make later AI analysis more relevant.</p><span>Update through your connected AI</span>
+      </article>
+      <Link href="/access" className="summary-card">
+        <small>SHARED ACCESS</small><strong>{activeGrantCount || "No active grants"}</strong>
+        <p>{activeGrantCount ? `${activeGrantCount} current invitation${activeGrantCount === 1 ? "" : "s"} or grant${activeGrantCount === 1 ? "" : "s"}.` : "Share selected categories by email, with an expiry."}</p><span>Manage access →</span>
+      </Link>
+      <Link href="/dashboard/connections" className="summary-card">
+        <small>CONNECTIONS</small><strong>{connection?.status === "connected" ? "Wahoo connected" : connection?.status === "reconnect_required" ? "Reconnect Wahoo" : "No wearable"}</strong>
+        <p>{data ? `${data.storedActivityCount} workouts stored.` : "Nutrition, weight, profile and labs can still be saved through AI."}</p><span>Manage connections →</span>
+      </Link>
+    </section>
+
+    <section className="dashboard-boundary">
+      <div><p className="section-index light">DATA BOUNDARIES</p><h2>Three categories.<br />No hidden bundle.</h2></div>
+      <ol><li><b>01</b><span>Training</span><p>Workouts, training load, goals and practical training constraints.</p></li><li><b>02</b><span>Nutrition</span><p>Meals, macros, dietary context and dated weight history.</p></li><li><b>03</b><span>Health</span><p>Laboratory results, conditions, injuries, contraindications and medications.</p></li></ol>
+    </section>
+  </div>;
 }

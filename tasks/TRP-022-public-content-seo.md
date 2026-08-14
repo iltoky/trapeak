@@ -1,6 +1,6 @@
 # TRP-022 — Актуализация публичных материалов и SEO
 
-Статус: **Next**
+Статус: **Implementation complete; publication and production verification pending**
 
 ## Description
 
@@ -9,6 +9,8 @@
 ## Acceptance Criteria
 
 - Лендинг отражает работающие Nutrition, Labs, Profile, weight history, automatic Wahoo sync и исторический training context.
+- Лендинг показывает portable history, работу с несколькими AI, планирование тренировок в выбранном AI или с тренером и delegated access.
+- Текущие публичные категории ограничены `training`, `nutrition`, `health`; recovery не рекламируется до подключения измеряемого источника.
 - На лендинге и в AI guides явно раскрыты сценарии «Записывайте там, где удобно. Анализируйте там, где лучше» и «AI меняются — ваша история остаётся».
 - Добавлен копируемый стартовый onboarding prompt и пример запроса тренировки на сегодня с учётом предыдущих нагрузок.
 - `public/llms.txt`, MCP instructions, AI guides, FAQ и public MCP page описывают одинаковый набор возможностей и ограничений.
@@ -17,6 +19,7 @@
 - Появляется публичный support/contact URL, пригодный для listing; publisher/operator согласован с verified OpenAI identity.
 - У каждой индексируемой страницы проверены уникальные title, description и canonical; sitemap, robots, Open Graph и structured data соответствуют production URL.
 - Проверены broken links, mobile layout, accessibility, Lighthouse и отсутствие индексируемых preview/private URLs.
+- Dashboard разделён на Overview, Training, Nutrition, Health, Shared access и Connections; питание сгруппировано по дням.
 - Зафиксированы базовые поисковые запросы и проверка Google Search Console/Bing Webmaster Tools после deployment.
 
 ## Initial audit findings
@@ -27,6 +30,7 @@
 - Legal pages не имеют уникальных title/description, а dashboard и auth pages нужно явно исключить из индексации.
 - Sitemap использует фиксированный `lastModified` от 12 августа 2026 года и не содержит будущую support/contact page.
 - Structured data есть в AI guide templates, но отсутствует на главной; перед добавлением publisher markup нужно утвердить публичную identity.
+- Delegated access уже опубликован, но лендинг, guides и roadmap его не отражают.
 - Статус Google Search Console и Bing Webmaster Tools нельзя подтвердить из репозитория — это owner action после deployment.
 
 ## Release Actions

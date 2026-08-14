@@ -4,6 +4,7 @@ import {
   listOwnedDataAccessGrants,
   listReceivedDataAccessGrants,
 } from "@/lib/access/data";
+import { assignableDataPermissions } from "@/lib/access/permissions";
 
 export async function GET() {
   const user = await requireAuthUser();
@@ -26,6 +27,9 @@ export async function POST(request: Request) {
       typeof input.recipientEmail !== "string"
       || !Array.isArray(input.permissions)
       || input.permissions.some((value) => typeof value !== "string")
+      || input.permissions.some((value) => !assignableDataPermissions.includes(
+        value as (typeof assignableDataPermissions)[number],
+      ))
       || typeof input.expiresAt !== "string"
     ) {
       return Response.json({ error: "Invalid grant input" }, { status: 400 });

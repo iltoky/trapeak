@@ -9,6 +9,8 @@ import { isPublicIntegrationPath } from "@/lib/integrations/public-routes";
 
 const isProtectedRoute = createRouteMatcher([
   "/dashboard(.*)",
+  "/access(.*)",
+  "/api/access(.*)",
   "/api/me(.*)",
   "/api/nutrition(.*)",
   "/api/integrations(.*)",
@@ -40,7 +42,10 @@ const configuredProxy = authConfigured
 
 export function proxy(request: NextRequest, event: NextFetchEvent) {
   if (!configuredProxy) {
-    if (request.nextUrl.pathname.startsWith("/dashboard")) {
+    if (
+      request.nextUrl.pathname.startsWith("/dashboard")
+      || request.nextUrl.pathname.startsWith("/access")
+    ) {
       return NextResponse.redirect(
         new URL("/sign-in?setup=required", request.url),
       );
@@ -48,6 +53,7 @@ export function proxy(request: NextRequest, event: NextFetchEvent) {
 
     if (
       request.nextUrl.pathname.startsWith("/api/me") ||
+      request.nextUrl.pathname.startsWith("/api/access") ||
       request.nextUrl.pathname.startsWith("/api/nutrition") ||
       (request.nextUrl.pathname.startsWith("/api/integrations") &&
         !isPublicIntegrationPath(request.nextUrl.pathname))

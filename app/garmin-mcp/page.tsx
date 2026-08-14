@@ -4,6 +4,7 @@ import AiSearchPage from "../ai-search-page";
 export const metadata: Metadata = {
   title: "Garmin MCP Server — Planned Read-Only Access",
   description: "TRAPEAK is developing a user-specific MCP server for authorized Garmin activity data. Learn about the planned tools, security model and status.",
+  robots: { index: false, follow: true },
   alternates: { canonical: "/garmin-mcp" },
   openGraph: {
     title: "Garmin MCP Server — Planned Read-Only Access",

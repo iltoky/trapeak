@@ -7,6 +7,7 @@ import { isAuthConfigured } from "@/lib/auth/config";
 import "./globals.css";
 import "./guides.css";
 import "./auth.css";
+import "./product.css";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -20,13 +21,13 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "TRAPEAK — Fitness data infrastructure for AI",
+    default: "TRAPEAK — Your fitness and health data for any AI",
     template: "%s | TRAPEAK",
   },
-  description: "TRAPEAK private beta connects authorized Wahoo workouts, nutrition records, and laboratory results to compatible AI assistants through a secure personal MCP connection.",
+  description: "Keep workouts, nutrition, weight and health history in one permissioned data layer. Use it with compatible AI assistants or share selected categories with people you trust.",
   metadataBase: new URL("https://trapeak.com"),
-  alternates: { canonical: "/" },
-  openGraph: { title: "TRAPEAK — Fitness data infrastructure for AI", description: "A secure personal MCP connection for authorized fitness, nutrition, and laboratory data. Available in private beta with Wahoo.", url: "https://trapeak.com", siteName: "TRAPEAK", type: "website" },
+  openGraph: { title: "Your data. Any AI. People you trust.", description: "A permissioned fitness and health history for compatible AI assistants, coaches, doctors and dietitians.", url: "https://trapeak.com", siteName: "TRAPEAK", type: "website", locale: "en_US" },
+  twitter: { card: "summary_large_image", title: "Your data. Any AI. People you trust.", description: "A permissioned fitness and health history for AI and people you choose." },
   icons: {
     icon: [
       { url: "/brand/trapeak-app-icon.svg", type: "image/svg+xml" },

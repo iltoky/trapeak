@@ -5,6 +5,7 @@ export const metadata: Metadata = {
   title: "Garmin to ChatGPT — Planned Secure Connection",
   description: "Learn how TRAPEAK plans to make user-authorized Garmin activity data available to ChatGPT through a secure, personal MCP connection.",
   alternates: { canonical: "/garmin-to-chatgpt" },
+  robots: { index: false, follow: true },
   openGraph: {
     title: "Garmin to ChatGPT — Planned Secure Connection",
     description: "A planned, user-authorized path from Garmin activity data to ChatGPT through TRAPEAK MCP.",

@@ -1,8 +1,11 @@
+import type { Metadata } from "next";
 import { LegalPage } from "../legal-page";
+
+export const metadata: Metadata = { title: "Data Deletion", description: "How to delete individual TRAPEAK records, disconnect sources, revoke shared access or request full account deletion.", alternates: { canonical: "/data-deletion" } };
 
 export default function Deletion() {
   return <LegalPage eyebrow="LEGAL / 03" title="Data Deletion">
-    <p>You control the records stored in TRAPEAK. Individual nutrition entries and laboratory reports can be permanently deleted in the authenticated dashboard or through a connected AI assistant after an explicit deletion request. You can also request deletion of your full TRAPEAK account, imported fitness profile, stored workouts, connected-provider records, and support information associated with you.</p>
+    <p>You control the records stored in TRAPEAK. Individual nutrition entries and laboratory reports can be permanently deleted in the authenticated dashboard or through a connected AI assistant after an explicit deletion request. Shared access can be revoked immediately from the dashboard. You can also request deletion of your full TRAPEAK account, custom profile, dated weight history, imported fitness profile, stored workouts, connected-provider records, access grants and support information associated with you.</p>
     <h2>Delete individual records</h2>
     <p>Use the Delete action in your dashboard, or explicitly ask your connected AI assistant to delete a specific TRAPEAK nutrition entry or laboratory report. Deleting a laboratory report also deletes all results stored inside it. These actions cannot be undone.</p>
     <h2>How to request deletion</h2>
