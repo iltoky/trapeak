@@ -11,7 +11,6 @@ function HeaderActions({ authConfigured }: { authConfigured: boolean }) {
         <Link className="button black nav-cta" href="/sign-up">Create account</Link>
       </Show>
       <Show when="signed-in">
-        <Link className="nav-sign-in" href="/access">Shared access</Link>
         <Link className="nav-sign-in" href="/dashboard">Dashboard</Link>
         <UserButton />
       </Show>
