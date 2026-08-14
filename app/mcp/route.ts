@@ -182,6 +182,13 @@ const trainingContextSchema = z.object({
     sevenDayDistanceChangePercent: nullableNumber,
     sevenDayTrainingStressChangePercent: nullableNumber,
   }),
+  decisionSupport: z.object({
+    interpretation: z.literal("context_only"),
+    readinessScoreAvailable: z.literal(false),
+    freshUserCheckInRequired: z.boolean(),
+    checkInTopics: z.array(z.string()),
+    principles: z.array(z.string()),
+  }),
   nutrition: z.object({
     today: trainingNutritionDaySchema.nullable(),
     recentDays: z.array(trainingNutritionDaySchema),
@@ -201,6 +208,7 @@ const trainingContextSchema = z.object({
     dailyActivityAvailable: z.literal(false),
     stressAvailable: z.literal(false),
     recoveryAvailable: z.literal(false),
+    subjectiveCheckInAvailable: z.literal(false),
     limitations: z.array(z.string()),
   }),
 });
@@ -560,7 +568,7 @@ const handler = createMcpHandler(
       {
         title: "Get context for today's workout",
         description:
-          "Call this before selecting or building today's workout. It returns the authenticated user's chronological workout history, 7-day versus previous-7-day load, longer history, recent nutrition, Profile, weight trends and data limitations. Evaluate the sequence of previous workouts, not only today's data. High-load signals use provider TSS and are not a definitive anaerobic classification.",
+          "Call this before selecting or building today's workout. It returns the authenticated user's chronological workout history, 7-day versus previous-7-day load, longer history, recent nutrition, Profile, weight trends, decision-support principles and data limitations. It provides context, not a readiness score or automatic prescription. Interpret workload relative to the individual and obtain a fresh subjective check-in when requested.",
         inputSchema: z.object({
           asOf: z.string().datetime({ offset: true }).optional().describe(
             "Decision time as an ISO 8601 timestamp with offset. Defaults to the current server time.",
@@ -591,7 +599,7 @@ const handler = createMcpHandler(
         return {
           content: [{
             type: "text",
-            text: `Prepared ${trainingContext.historyDays}-day training context with ${trainingContext.recentActivities.length} activities. Review recent workout sequence and data limitations before recommending today's session.`,
+            text: `Prepared ${trainingContext.historyDays}-day training context with ${trainingContext.recentActivities.length} activities. This is decision context, not a readiness score. Review the full picture, data limitations, and requested user check-in before recommending today's session.`,
           }],
           structuredContent: { context: trainingContext },
         };
@@ -1015,7 +1023,7 @@ const handler = createMcpHandler(
   {
     serverInfo: { name: "trapeak", version: "0.9.2" },
     instructions:
-      "TRAPEAK stores authenticated fitness, nutrition, laboratory, dated weight, and custom profile data. For profile onboarding, call get_user_profile first, ask a short grouped questionnaire, and save only facts explicitly provided by the user. Store birthDate rather than fixed age; save exact weight measurements with create_weight_entry, never estimate them. Keep only qualitative workActivityContext in Profile. Sleep, daily activity, stress, HRV, readiness, and recovery must come from connected wearable sources when available; do not infer them or store manual substitutes in Profile. Caffeine and alcohol are not permanent Profile fields; a specific consumed drink may be logged as nutrition only after an explicit request. When weightUpdateDue is true, briefly offer to record a new measurement, especially every 14 days for weight-loss goals or every 30 days otherwise. After each profile update, say that the returned percentage is profile completeness rather than a health score and offer the suggested topic groups as optional follow-ups. Never infer medical conditions, contraindications, injuries, medications, dosage, or schedule. Before recommending today's workout, call get_training_context and evaluate the custom profile, previous workouts, accumulated load, and weight context, not only today's data. Explicitly check whether the newest activities contain back-to-back hard, interval, or anaerobic sessions, including when provider TSS is missing. Treat availability flags and limitations as part of the answer. Call create or update tools only after the user explicitly asks to save data. Call deletion tools only after the user explicitly asks to permanently delete the relevant record or entire profile, and pass confirm=true only for that explicit request. Nutrition estimates must include assumptions. Laboratory tools preserve reported values, units, ranges, and flags without inventing missing data or diagnosing conditions. Read and deletion tools may act only on records owned by the authenticated user.",
+      "TRAPEAK stores authenticated fitness, nutrition, laboratory, dated weight, and custom profile data. For profile onboarding, call get_user_profile first, ask a short grouped questionnaire, and save only facts explicitly provided by the user. Store birthDate rather than fixed age; save exact weight measurements with create_weight_entry, never estimate them. Keep only qualitative workActivityContext in Profile. Sleep, daily activity, stress, HRV, readiness, and recovery must come from connected wearable sources when available; do not infer them or store manual substitutes in Profile. Caffeine and alcohol are not permanent Profile fields; a specific consumed drink may be logged as nutrition only after an explicit request. When weightUpdateDue is true, briefly offer to record a new measurement, especially every 14 days for weight-loss goals or every 30 days otherwise. After each profile update, say that the returned percentage is profile completeness rather than a health score and offer the suggested topic groups as optional follow-ups. Never infer medical conditions, contraindications, injuries, medications, dosage, or schedule. Before recommending today's workout, call get_training_context. Treat it as decision context rather than a readiness score: consider the user's goals and medical constraints, individual training history, recent sequence and load, activity type, available recovery data, nutrition and weight context together. A pair of demanding sessions, a TSS threshold, or a week-over-week change is only one signal and must not determine the recommendation by itself. When decisionSupport requests a fresh check-in, ask briefly about current fatigue or energy, soreness or pain, illness symptoms, last night's sleep, willingness to train, and available time before prescribing intensity. Treat availability flags and limitations as part of the answer, distinguish measurements from uncertainty, and explain the main factors behind the recommendation. Call create or update tools only after the user explicitly asks to save data. Call deletion tools only after the user explicitly asks to permanently delete the relevant record or entire profile, and pass confirm=true only for that explicit request. Nutrition estimates must include assumptions. Laboratory tools preserve reported values, units, ranges, and flags without inventing missing data or diagnosing conditions. Read and deletion tools may act only on records owned by the authenticated user.",
   },
 );
 
