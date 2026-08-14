@@ -31,11 +31,12 @@
 3. `https://trapeak.com/mcp` подключён в ChatGPT Developer mode.
 4. OAuth и три read-only tools проверены владельцем.
 
-## Нужно сейчас для Wahoo webhooks
+## Выполнено для Wahoo webhooks
 
-1. Создать случайный `WAHOO_WEBHOOK_TOKEN` и добавить его в Vercel Production secrets.
-2. В Wahoo Developer Portal указать URL `https://trapeak.com/api/integrations/wahoo/webhook`, тот же token и включить webhook.
-3. После deployment создать или обновить тестовую тренировку.
+1. `WAHOO_WEBHOOK_TOKEN` добавлен в Vercel Production secrets, production deployment обновлён.
+2. В Wahoo Developer Portal настроен URL `https://trapeak.com/api/integrations/wahoo/webhook`, token и webhook включён.
+3. Реальный webhook получил `200`; тренировка появилась в MCP без ручной синхронизации.
+4. Неверный token вернул `401`; runtime errors не обнаружены.
 
 ## Нужно сейчас для Nutrition
 

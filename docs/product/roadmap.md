@@ -6,7 +6,7 @@
 | 1. Auth + Wahoo connection | Безопасное подключение и отключение аккаунта Wahoo | Done |
 | 2. Wahoo workout ingestion | Профиль и первая страница завершённых Wahoo-тренировок в БД TRAPEAK | Done |
 | 3. MCP | Read-only доступ Claude и ChatGPT к данным пользователя | Done |
-| 4. Automatic ingestion | Wahoo workout summary webhooks без дублей | Published; configuration pending |
+| 4. Automatic ingestion | Wahoo workout summary webhooks без дублей | Production verified |
 | 5. Nutrition | AI-first журнал питания, дневные итоги и MCP | Production verified |
 | 6. Labs / Blood Tests | Структурированные лабораторные показатели и история | Production verified |
 | 7. User-controlled deletion | Owner-scoped удаление питания и лабораторных отчётов через AI и dashboard | Published; authenticated deletion e2e pending |
