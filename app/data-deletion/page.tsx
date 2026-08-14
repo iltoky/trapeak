@@ -2,7 +2,9 @@ import { LegalPage } from "../legal-page";
 
 export default function Deletion() {
   return <LegalPage eyebrow="LEGAL / 03" title="Data Deletion">
-    <p>You can request deletion of your TRAPEAK account, imported fitness profile, stored workouts, nutrition records, laboratory reports and results, connected-provider records, and support information associated with you.</p>
+    <p>You control the records stored in TRAPEAK. Individual nutrition entries and laboratory reports can be permanently deleted in the authenticated dashboard or through a connected AI assistant after an explicit deletion request. You can also request deletion of your full TRAPEAK account, imported fitness profile, stored workouts, connected-provider records, and support information associated with you.</p>
+    <h2>Delete individual records</h2>
+    <p>Use the Delete action in your dashboard, or explicitly ask your connected AI assistant to delete a specific TRAPEAK nutrition entry or laboratory report. Deleting a laboratory report also deletes all results stored inside it. These actions cannot be undone.</p>
     <h2>How to request deletion</h2>
     <ol>
       <li>First disconnect Wahoo in the TRAPEAK dashboard if you want to revoke future provider access.</li>

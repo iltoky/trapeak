@@ -134,13 +134,15 @@ export async function createNutritionEntry(
   return { id: existing[0].id, created: false };
 }
 
-export async function deleteNutritionEntry(userId: string, id: string) {
+export async function deleteNutritionEntry(userId: string, id: string): Promise<boolean> {
   const sql = getDatabase();
-  await sql`
+  const deleted = await sql`
     DELETE FROM nutrition_entries
      WHERE user_id = ${userId}
        AND id = ${id}
-  `;
+    RETURNING id
+  ` as Array<{ id: string }>;
+  return deleted.length > 0;
 }
 
 export async function listNutritionEntries(input: Readonly<{

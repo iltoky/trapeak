@@ -6,6 +6,7 @@ import { z } from "zod";
 import { requireMcpUserId } from "@/lib/mcp/auth";
 import {
   createLabReport,
+  deleteLabReport,
   getLabReport,
   getLabResultHistory,
   listLabReports,
@@ -22,10 +23,12 @@ import {
 } from "@/lib/mcp/data";
 import {
   createNutritionEntry,
+  deleteNutritionEntry,
   getNutritionDaySummaries,
   listNutritionEntries,
 } from "@/lib/nutrition/data";
 import { nutritionMealTypes, parseNutritionEntryInput } from "@/lib/nutrition/model";
+import { deletionConfirmationSchema } from "@/lib/mcp/deletion";
 
 const providerSchema = z.enum(["garmin", "suunto", "wahoo"]);
 const nullableNumber = z.number().nullable();
@@ -340,6 +343,44 @@ const handler = createMcpHandler(
     );
 
     server.registerTool(
+      "delete_nutrition_entry",
+      {
+        title: "Delete a nutrition entry",
+        description:
+          "Permanently delete one nutrition entry owned by the authenticated user. Use this only after the user explicitly asks to delete the specific entry ID. Never infer deletion from a correction, replacement, or general cleanup request. If the user has not identified a record, call list_nutrition_entries first.",
+        inputSchema: z.object({
+          id: z.string().uuid().describe(
+            "TRAPEAK nutrition entry ID returned by list_nutrition_entries.",
+          ),
+          confirm: deletionConfirmationSchema,
+        }),
+        outputSchema: z.object({
+          id: z.string().uuid(),
+          deleted: z.boolean(),
+        }),
+        annotations: {
+          readOnlyHint: false,
+          destructiveHint: true,
+          openWorldHint: false,
+          idempotentHint: true,
+        },
+      },
+      async ({ id }, context) => {
+        const userId = requireMcpUserId(context.http?.authInfo);
+        const deleted = await deleteNutritionEntry(userId, id);
+        return {
+          content: [{
+            type: "text",
+            text: deleted
+              ? "Nutrition entry permanently deleted."
+              : "No nutrition entry with that ID is available to this user; nothing was deleted.",
+          }],
+          structuredContent: { id, deleted },
+        };
+      },
+    );
+
+    server.registerTool(
       "get_nutrition_summary",
       {
         title: "Get nutrition summary",
@@ -441,6 +482,44 @@ const handler = createMcpHandler(
     );
 
     server.registerTool(
+      "delete_lab_report",
+      {
+        title: "Delete a laboratory report",
+        description:
+          "Permanently delete one laboratory report and all of its stored results. Use this only after the user explicitly asks to delete the specific report ID. Never infer deletion from a corrected PDF, replacement report, or general cleanup request. If the user has not identified a report, call list_lab_reports first.",
+        inputSchema: z.object({
+          id: z.string().uuid().describe(
+            "TRAPEAK laboratory report ID returned by list_lab_reports.",
+          ),
+          confirm: deletionConfirmationSchema,
+        }),
+        outputSchema: z.object({
+          id: z.string().uuid(),
+          deleted: z.boolean(),
+        }),
+        annotations: {
+          readOnlyHint: false,
+          destructiveHint: true,
+          openWorldHint: false,
+          idempotentHint: true,
+        },
+      },
+      async ({ id }, context) => {
+        const userId = requireMcpUserId(context.http?.authInfo);
+        const deleted = await deleteLabReport(userId, id);
+        return {
+          content: [{
+            type: "text",
+            text: deleted
+              ? "Laboratory report and its results permanently deleted."
+              : "No laboratory report with that ID is available to this user; nothing was deleted.",
+          }],
+          structuredContent: { id, deleted },
+        };
+      },
+    );
+
+    server.registerTool(
       "get_lab_report",
       {
         title: "Get a laboratory report",
@@ -490,9 +569,9 @@ const handler = createMcpHandler(
     );
   },
   {
-    serverInfo: { name: "trapeak", version: "0.6.0" },
+    serverInfo: { name: "trapeak", version: "0.7.0" },
     instructions:
-      "TRAPEAK stores authenticated fitness, nutrition, and laboratory data. Call write tools only after the user explicitly asks to save data. Nutrition estimates must include assumptions. Laboratory tools preserve reported values, units, ranges, and flags without inventing missing data or diagnosing conditions. Read tools may retrieve only records returned for the authenticated user.",
+      "TRAPEAK stores authenticated fitness, nutrition, and laboratory data. Call create tools only after the user explicitly asks to save data. Call deletion tools only after the user explicitly asks to permanently delete a specific record, and pass confirm=true only for that explicit request. Nutrition estimates must include assumptions. Laboratory tools preserve reported values, units, ranges, and flags without inventing missing data or diagnosing conditions. Read and deletion tools may act only on records owned by the authenticated user.",
   },
 );
 

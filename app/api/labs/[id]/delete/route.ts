@@ -1,6 +1,6 @@
 import { getAuthUser } from "@/lib/auth/current-user";
 import { readAppUrl } from "@/lib/config/app";
-import { deleteNutritionEntry } from "@/lib/nutrition/data";
+import { deleteLabReport } from "@/lib/labs/data";
 
 export async function POST(
   request: Request,
@@ -23,12 +23,12 @@ export async function POST(
 
   const { id } = await params;
   try {
-    const deleted = await deleteNutritionEntry(user.id, id);
+    const deleted = await deleteLabReport(user.id, id);
     return Response.redirect(
-      new URL(`/dashboard?nutrition=${deleted ? "deleted" : "not_found"}`, appUrl),
+      new URL(`/dashboard?labs=${deleted ? "deleted" : "not_found"}`, appUrl),
       303,
     );
   } catch {
-    return Response.redirect(new URL("/dashboard?nutrition=storage_error", appUrl), 303);
+    return Response.redirect(new URL("/dashboard?labs=storage_error", appUrl), 303);
   }
 }

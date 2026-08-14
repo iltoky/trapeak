@@ -107,6 +107,17 @@ export async function createLabReport(userId: string, input: LabReportInput): Pr
   return { id: existing[0].id, created: false, resultCount: Number(existing[0].result_count) };
 }
 
+export async function deleteLabReport(userId: string, id: string): Promise<boolean> {
+  const sql = getDatabase();
+  const deleted = await sql`
+    DELETE FROM lab_reports
+     WHERE user_id = ${userId}
+       AND id = ${id}
+    RETURNING id
+  ` as Array<{ id: string }>;
+  return deleted.length > 0;
+}
+
 export async function listLabReports(input: Readonly<{
   userId: string; from?: string; to?: string; testType?: LabTestType; limit: number;
 }>): Promise<readonly LabReportSummary[]> {

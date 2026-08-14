@@ -1,6 +1,6 @@
 # Remote MCP
 
-Статус: **Implemented / awaiting production OAuth configuration**
+Статус: **Production private beta**
 
 ## Назначение
 
@@ -19,15 +19,32 @@ OAuth discovery endpoints:
 
 Все SQL-запросы MCP обязательно фильтруются по проверенному `user_id`. `get_activity` дополнительно связывает внутренний activity UUID с тем же владельцем. Неавторизованный request получает RFC 9728-compatible `WWW-Authenticate` challenge.
 
-## Инструменты v0.3.0
+## Инструменты v0.7.0
 
 | Tool | Назначение | Изменяет данные |
 |---|---|---|
 | `get_athlete_profile` | Нормализованные поля профиля из подключённых providers | Нет |
 | `list_activities` | Список тренировок с provider/date/type/limit filters | Нет |
 | `get_activity` | Все доступные нормализованные поля одной тренировки | Нет |
+| `create_nutrition_entry` | Сохранить описание и КБЖУ приёма пищи | Да |
+| `list_nutrition_entries` | Список сохранённых приёмов пищи | Нет |
+| `get_nutrition_summary` | Дневные итоги КБЖУ | Нет |
+| `delete_nutrition_entry` | Удалить конкретную запись питания владельца | Да, необратимо |
+| `create_lab_report` | Сохранить лабораторный отчёт и показатели | Да |
+| `list_lab_reports` | Список лабораторных отчётов | Нет |
+| `get_lab_report` | Полный отчёт с показателями | Нет |
+| `get_lab_result_history` | История одного точного названия показателя | Нет |
+| `delete_lab_report` | Удалить отчёт владельца и все его показатели | Да, необратимо |
 
-Все инструменты имеют `readOnlyHint: true`, `destructiveHint: false` и `openWorldHint: false`.
+Read tools имеют `readOnlyHint: true`. Create tools идемпотентны и не помечаются destructive. Delete tools имеют `destructiveHint: true`, `idempotentHint: true` и требуют `confirm: true` после явной команды пользователя. Все инструменты имеют `openWorldHint: false`.
+
+## Безопасное удаление
+
+- AI сначала получает внутренний ID через соответствующий list tool, если пользователь его не указал.
+- Запрос исправить, заменить или повторно загрузить данные не считается запросом на удаление.
+- SQL `DELETE` всегда ограничен проверенным Clerk `user_id`; чужой или отсутствующий ID возвращает `deleted: false` без раскрытия владельца.
+- `lab_results` связаны с отчётом через `ON DELETE CASCADE`.
+- Dashboard использует authenticated same-origin POST и отдельное пользовательское подтверждение.
 
 ## Граница данных
 

@@ -6,6 +6,7 @@ import { requireAuthUser } from "@/lib/auth/current-user";
 import { getProviderConnectionSummary } from "@/lib/integrations/connections";
 import { getProviderDataSummary } from "@/lib/integrations/provider-data";
 import { isWahooWebhookConfigured } from "@/lib/integrations/wahoo/config";
+import { listLabReports, type LabReportSummary } from "@/lib/labs/data";
 import {
   getNutritionDaySummaries,
   listNutritionEntries,
@@ -13,6 +14,7 @@ import {
   type NutritionEntry,
 } from "@/lib/nutrition/data";
 import { SiteHeader } from "../site-header";
+import { DeleteForm } from "./delete-form";
 
 export const metadata = { title: "Account" };
 
@@ -32,8 +34,15 @@ const wahooMessages: Readonly<Record<string, string>> = {
 const nutritionMessages: Readonly<Record<string, string>> = {
   created: "Nutrition entry saved.",
   deleted: "Nutrition entry deleted.",
+  not_found: "Nutrition entry was not found or was already deleted.",
   invalid: "Check the nutrition fields and try again.",
   storage_error: "Nutrition storage is not available yet.",
+};
+
+const labMessages: Readonly<Record<string, string>> = {
+  deleted: "Laboratory report and its results were deleted.",
+  not_found: "Laboratory report was not found or was already deleted.",
+  storage_error: "Laboratory storage is not available yet.",
 };
 
 function formatSyncTime(value: Date): string {
@@ -44,7 +53,7 @@ function formatSyncTime(value: Date): string {
   }).format(value)} UTC`;
 }
 
-function formatNutritionTime(value: string): string {
+function formatRecordTime(value: string): string {
   return `${new Intl.DateTimeFormat("en-GB", {
     dateStyle: "medium",
     timeStyle: "short",
@@ -61,6 +70,7 @@ export default async function DashboardPage({
     created?: string;
     updated?: string;
     nutrition?: string;
+    labs?: string;
   }>;
 }) {
   if (!isAuthConfigured()) {
@@ -74,6 +84,7 @@ export default async function DashboardPage({
     created,
     updated,
     nutrition,
+    labs,
   } = await searchParams;
   let storageReady = true;
   let connection = null;
@@ -101,17 +112,29 @@ export default async function DashboardPage({
   let nutritionStorageReady = true;
   let nutritionEntries: readonly NutritionEntry[] | null = null;
   let todayNutrition: NutritionDaySummary | null = null;
-  try {
-    const [entries, daySummaries] = await Promise.all([
+  let labStorageReady = true;
+  let labReports: readonly LabReportSummary[] | null = null;
+  const [nutritionResult, labResult] = await Promise.allSettled([
+    Promise.all([
       listNutritionEntries({ userId: user.id, limit: 10 }),
       getNutritionDaySummaries({ userId: user.id, from: today, to: today }),
-    ]);
-    nutritionEntries = entries;
-    todayNutrition = daySummaries[0] ?? null;
-  } catch {
+    ]),
+    listLabReports({ userId: user.id, limit: 10 }),
+  ]);
+  if (nutritionResult.status === "fulfilled") {
+    nutritionEntries = nutritionResult.value[0];
+    todayNutrition = nutritionResult.value[1][0] ?? null;
+  } else {
     nutritionStorageReady = false;
   }
+  if (labResult.status === "fulfilled") {
+    labReports = labResult.value;
+  } else {
+    labStorageReady = false;
+  }
   const nutritionNotice = nutrition ? nutritionMessages[nutrition] : undefined;
+  const labNotice = labs ? labMessages[labs] : undefined;
+  const accountNotice = labNotice ?? nutritionNotice ?? notice;
 
   return (
     <main className="account-page">
@@ -125,9 +148,9 @@ export default async function DashboardPage({
           </p>
         </div>
         <UserButton />
-        {nutritionNotice ?? notice ? (
+        {accountNotice ? (
           <p className="account-notice" role="status">
-            {nutritionNotice ?? notice}
+            {accountNotice}
           </p>
         ) : null}
         <div className="account-empty">
@@ -216,7 +239,7 @@ export default async function DashboardPage({
                       <article key={entry.id}>
                         <div>
                           <b>{entry.description}</b>
-                          <small>{entry.mealType} · {formatNutritionTime(entry.consumedAt)}</small>
+                          <small>{entry.mealType} · {formatRecordTime(entry.consumedAt)}</small>
                           <span>
                             {entry.caloriesKilocalories} kcal · P {entry.proteinGrams} g · C {entry.carbohydratesGrams} g · F {entry.fatGrams} g
                           </span>
@@ -224,9 +247,10 @@ export default async function DashboardPage({
                             <small>Estimated: {entry.estimationNotes}</small>
                           ) : null}
                         </div>
-                        <form action={`/api/nutrition/${entry.id}/delete`} method="post">
-                          <button type="submit">Delete</button>
-                        </form>
+                        <DeleteForm
+                          action={`/api/nutrition/${entry.id}/delete`}
+                          confirmation={`Permanently delete “${entry.description}”?`}
+                        />
                       </article>
                     ))}
                   </div>
@@ -234,6 +258,42 @@ export default async function DashboardPage({
               </>
             ) : (
               <p className="account-setup">Run the Nutrition database migration to enable meal logging.</p>
+            )}
+          </div>
+        </div>
+        <div className="account-empty nutrition-section">
+          <span>03</span>
+          <div>
+            <h2>Laboratory reports</h2>
+            <p>
+              Ask your connected AI assistant to save structured laboratory results. Deleting a report also permanently deletes all indicators stored inside it.
+            </p>
+            {labStorageReady ? (
+              labReports && labReports.length > 0 ? (
+                <div className="nutrition-list">
+                  <h3>Recent reports</h3>
+                  {labReports.map((report) => (
+                    <article key={report.id}>
+                      <div>
+                        <b>{report.title}</b>
+                        <small>{report.testType} · {formatRecordTime(report.collectedAt)}</small>
+                        <span>
+                          {report.resultCount} results
+                          {report.laboratory ? ` · ${report.laboratory}` : ""}
+                        </span>
+                      </div>
+                      <DeleteForm
+                        action={`/api/labs/${report.id}/delete`}
+                        confirmation={`Permanently delete “${report.title}” and all ${report.resultCount} stored results?`}
+                      />
+                    </article>
+                  ))}
+                </div>
+              ) : (
+                <p className="account-sync-status">No laboratory reports stored yet.</p>
+              )
+            ) : (
+              <p className="account-setup">Run the Labs database migration to enable laboratory reports.</p>
             )}
           </div>
         </div>
