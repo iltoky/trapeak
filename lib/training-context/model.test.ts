@@ -81,6 +81,10 @@ test("builds historical load windows and consecutive workout signals", () => {
   assert.equal(context.loadWindows[0].activityCount, 3);
   assert.equal(context.loadWindows[1].activityCount, 1);
   assert.equal(context.comparison.sevenDayDurationChangePercent, 500);
+  assert.equal(context.decisionSupport.interpretation, "context_only");
+  assert.equal(context.decisionSupport.readinessScoreAvailable, false);
+  assert.equal(context.decisionSupport.freshUserCheckInRequired, true);
+  assert.match(context.decisionSupport.principles[0], /one input rather than a decision rule/);
 });
 
 test("groups nutrition by the user's local date and reports missing sources", () => {
@@ -118,6 +122,7 @@ test("groups nutrition by the user's local date and reports missing sources", ()
   assert.equal(context.dataAvailability.sleepAvailable, false);
   assert.equal(context.dataAvailability.dailyActivityAvailable, false);
   assert.equal(context.dataAvailability.stressAvailable, false);
+  assert.equal(context.dataAvailability.subjectiveCheckInAvailable, false);
   assert.match(context.dataAvailability.limitations.at(-1) ?? "", /no provider TSS/);
 });
 
