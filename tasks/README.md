@@ -9,6 +9,7 @@
 - [TRP-016 — Nutrition journal and MCP](TRP-016-nutrition.md)
 - [TRP-017 — Labs / Blood Tests](TRP-017-labs.md)
 - [TRP-018 — единый контекст для сегодняшней тренировки](TRP-018-training-context.md)
+- [TRP-019 — User Profile и progressive onboarding](TRP-019-user-profile.md)
 - [Этап 1 — авторизация и подключение Garmin (будущий этап)](stage-1-auth-and-garmin/README.md)
 
 Текущая разработка ведётся напрямую в `main` с обязательными typecheck, tests и production build перед публикацией. Дополнительные постоянные рабочие ветки не создаются. Старые Garmin-задачи сохранены и возобновятся после получения API-доступа.

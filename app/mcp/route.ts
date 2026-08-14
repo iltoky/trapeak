@@ -31,6 +31,19 @@ import {
 } from "@/lib/nutrition/data";
 import { nutritionMealTypes, parseNutritionEntryInput } from "@/lib/nutrition/model";
 import { deletionConfirmationSchema } from "@/lib/mcp/deletion";
+import {
+  deleteUserProfile,
+  getUserProfile,
+  updateUserProfile,
+} from "@/lib/profile/data";
+import {
+  profileFieldKeys,
+  profileFieldStatusUpdateSchema,
+  profileFieldStatusValues,
+  profileSectionKeys,
+  userProfilePatchSchema,
+  userProfileSchema,
+} from "@/lib/profile/model";
 
 const providerSchema = z.enum(["garmin", "suunto", "wahoo"]);
 const nullableNumber = z.number().nullable();
@@ -113,6 +126,15 @@ const trainingContextSchema = z.object({
   utcOffsetMinutes: z.number().int(),
   historyDays: z.number().int(),
   profiles: z.array(athleteProfileSchema),
+  userProfile: z.object({
+    profile: userProfileSchema,
+    fieldStatuses: z.partialRecord(
+      z.enum(profileFieldKeys),
+      z.enum(profileFieldStatusValues),
+    ),
+    createdAt: z.string(),
+    updatedAt: z.string(),
+  }).nullable(),
   recentActivities: z.array(trainingContextActivitySchema),
   loadWindows: z.array(trainingLoadWindowSchema),
   sequence: z.object({
@@ -140,7 +162,10 @@ const trainingContextSchema = z.object({
     activitiesWithHeartRate: z.number().int(),
     activitiesWithTrainingStressScore: z.number().int(),
     providerProfileAvailable: z.boolean(),
-    goalsAndRestrictionsAvailable: z.literal(false),
+    userProfileAvailable: z.boolean(),
+    profileCompletenessPercent: z.number().int().min(0).max(100),
+    goalsAndRestrictionsAvailable: z.boolean(),
+    healthAndMedicationContextAvailable: z.boolean(),
     sleepAvailable: z.literal(false),
     recoveryAvailable: z.literal(false),
     limitations: z.array(z.string()),
@@ -195,6 +220,40 @@ const labHistoryPointSchema = labResultSchema.extend({
   testType: labTestTypeSchema,
   reportTitle: z.string(),
 });
+const profileCompletenessSectionSchema = z.object({
+  key: z.enum(profileSectionKeys),
+  title: z.string(),
+  percent: z.number().int().min(0).max(100),
+  completedWeight: z.number().int().min(0),
+  totalWeight: z.number().int().positive(),
+  missingFields: z.array(z.enum(profileFieldKeys)),
+});
+const profileCompletenessSchema = z.object({
+  percent: z.number().int().min(0).max(100),
+  completedWeight: z.number().int().min(0).max(100),
+  totalWeight: z.literal(100),
+  stage: z.enum(["initial", "progressive", "complete"]),
+  sections: z.array(profileCompletenessSectionSchema),
+  suggestedNextSections: z.array(profileCompletenessSectionSchema.pick({
+    key: true,
+    title: true,
+    percent: true,
+    missingFields: true,
+  })),
+});
+const userProfileRecordSchema = z.object({
+  profile: userProfileSchema,
+  fieldStatuses: z.partialRecord(
+    z.enum(profileFieldKeys),
+    z.enum(profileFieldStatusValues),
+  ),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
+const userProfileResultSchema = z.object({
+  userProfile: userProfileRecordSchema.nullable(),
+  completeness: profileCompletenessSchema,
+});
 
 const handler = createMcpHandler(
   (server) => {
@@ -225,6 +284,115 @@ const handler = createMcpHandler(
               : "No synchronized athlete profile is available.",
           }],
           structuredContent: result,
+        };
+      },
+    );
+
+    server.registerTool(
+      "get_user_profile",
+      {
+        title: "Get TRAPEAK user profile",
+        description:
+          "Read the authenticated user's own TRAPEAK profile, completion percentage, missing fields, and suggested onboarding topics. Use this at the start of profile onboarding and before asking follow-up profile questions. The percentage measures data completeness only, never health or fitness quality.",
+        outputSchema: userProfileResultSchema,
+        annotations: {
+          readOnlyHint: true,
+          destructiveHint: false,
+          openWorldHint: false,
+        },
+      },
+      async (context) => {
+        const userId = requireMcpUserId(context.http?.authInfo);
+        const result = await getUserProfile(userId);
+        return {
+          content: [{
+            type: "text",
+            text: result.record
+              ? `The user profile is ${result.completeness.percent}% complete. Offer the user a choice of the suggested next topics without implying that this is a health score.`
+              : "No TRAPEAK user profile exists yet. Ask one short grouped questionnaire: (1) primary goal, (2) age, height and weight, (3) usual activities and training experience, (4) active injuries, health restrictions or contraindications, (5) current medications with name, dose and schedule—or an explicit answer that there are none, and (6) available training days, preferred time and maximum duration. Save only the answers provided.",
+          }],
+          structuredContent: {
+            userProfile: result.record,
+            completeness: result.completeness,
+          },
+        };
+      },
+    );
+
+    server.registerTool(
+      "update_user_profile",
+      {
+        title: "Save or update TRAPEAK user profile",
+        description:
+          "Create or partially update the authenticated user's own profile only after the user explicitly provides or asks to save the facts. Send only fields discussed in the current request: omitted fields remain unchanged, null clears a field, and an empty list explicitly means none. Never infer medical conditions, contraindications, injuries, medication names, dosages, or schedules. Use fieldStatuses when a field is not applicable or the user prefers not to answer, so AI will not ask it repeatedly.",
+        inputSchema: z.object({
+          profile: userProfilePatchSchema.describe(
+            "Only the profile fields explicitly supplied or changed by the user.",
+          ),
+          fieldStatuses: z.array(profileFieldStatusUpdateSchema).max(profileFieldKeys.length)
+            .optional().describe(
+              "Fields explicitly marked not applicable or prefer not to answer. Do not use this merely because a field was not discussed yet.",
+            ),
+        }),
+        outputSchema: userProfileResultSchema,
+        annotations: {
+          readOnlyHint: false,
+          destructiveHint: false,
+          openWorldHint: false,
+          idempotentHint: true,
+        },
+      },
+      async (input, context) => {
+        const userId = requireMcpUserId(context.http?.authInfo);
+        const result = await updateUserProfile({
+          userId,
+          patch: input.profile,
+          fieldStatuses: input.fieldStatuses,
+        });
+        const topics = result.completeness.suggestedNextSections
+          .map(({ title }) => title)
+          .join(", ");
+        return {
+          content: [{
+            type: "text",
+            text: result.completeness.percent === 100
+              ? "Profile saved and 100% complete. This percentage measures data completeness only."
+              : `Profile saved and ${result.completeness.percent}% complete. This is data completeness, not a health score. Offer optional next topics: ${topics}.`,
+          }],
+          structuredContent: {
+            userProfile: result.record,
+            completeness: result.completeness,
+          },
+        };
+      },
+    );
+
+    server.registerTool(
+      "delete_user_profile",
+      {
+        title: "Delete TRAPEAK user profile",
+        description:
+          "Permanently delete the authenticated user's custom TRAPEAK profile, including goals, health context, medications, lifestyle, and onboarding progress. This does not delete wearable activities, nutrition, or laboratory reports. Use only after an explicit request to delete the entire profile.",
+        inputSchema: z.object({ confirm: deletionConfirmationSchema }),
+        outputSchema: z.object({ deleted: z.boolean() }),
+        annotations: {
+          readOnlyHint: false,
+          destructiveHint: true,
+          openWorldHint: false,
+          idempotentHint: true,
+        },
+      },
+      async (_, context) => {
+        const userId = requireMcpUserId(context.http?.authInfo);
+        const deleted = await deleteUserProfile(userId);
+        return {
+          content: [{
+            type: "text",
+            text: deleted
+              ? "The custom TRAPEAK user profile was permanently deleted. Other TRAPEAK data was not changed."
+              : "No custom TRAPEAK user profile existed; nothing was deleted.",
+          }],
+          structuredContent: { deleted },
         };
       },
     );
@@ -687,9 +855,9 @@ const handler = createMcpHandler(
     );
   },
   {
-    serverInfo: { name: "trapeak", version: "0.8.0" },
+    serverInfo: { name: "trapeak", version: "0.9.0" },
     instructions:
-      "TRAPEAK stores authenticated fitness, nutrition, and laboratory data. Before recommending today's workout, call get_training_context and evaluate previous workouts and accumulated load, not only today's data. Explicitly check whether the newest activities contain back-to-back hard, interval, or anaerobic sessions, including when provider TSS is missing. Treat availability flags and limitations as part of the answer. Call create tools only after the user explicitly asks to save data. Call deletion tools only after the user explicitly asks to permanently delete a specific record, and pass confirm=true only for that explicit request. Nutrition estimates must include assumptions. Laboratory tools preserve reported values, units, ranges, and flags without inventing missing data or diagnosing conditions. Read and deletion tools may act only on records owned by the authenticated user.",
+      "TRAPEAK stores authenticated fitness, nutrition, laboratory, and custom profile data. For profile onboarding, call get_user_profile first, ask a short grouped questionnaire, and save only facts explicitly provided by the user. After each update, say that the returned percentage is profile completeness rather than a health score and offer the suggested topic groups as optional follow-ups. Never infer medical conditions, contraindications, injuries, medications, dosage, or schedule. Before recommending today's workout, call get_training_context and evaluate the custom profile, previous workouts, and accumulated load, not only today's data. Explicitly check whether the newest activities contain back-to-back hard, interval, or anaerobic sessions, including when provider TSS is missing. Treat availability flags and limitations as part of the answer. Call create or update tools only after the user explicitly asks to save data. Call deletion tools only after the user explicitly asks to permanently delete the relevant record or entire profile, and pass confirm=true only for that explicit request. Nutrition estimates must include assumptions. Laboratory tools preserve reported values, units, ranges, and flags without inventing missing data or diagnosing conditions. Read and deletion tools may act only on records owned by the authenticated user.",
   },
 );
 

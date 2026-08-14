@@ -1,6 +1,6 @@
 # TRAPEAK
 
-TRAPEAK is a secure, user-specific data layer that makes authorized fitness, nutrition, and laboratory records available to MCP-compatible AI clients.
+TRAPEAK is a secure, user-specific data layer that makes authorized fitness, nutrition, laboratory, and custom profile data available to MCP-compatible AI clients.
 
 Product status: production private beta. Authenticated beta users can connect Wahoo and use TRAPEAK MCP. Garmin remains planned and is pending provider API approval. General public distribution has not started.
 
@@ -27,6 +27,7 @@ Product status: production private beta. Authenticated beta users can connect Wa
 - Nutrition and laboratory create tools run only after an explicit user request and are idempotent.
 - Deletion tools act only on a specific authenticated user's record, require explicit confirmation, and cannot be undone.
 - TRAPEAK stores reported laboratory values but does not provide medical diagnosis.
+- Custom profile tools save only user-provided facts, including optional medication details; profile completion is not a health score.
 - Third-party names and trademarks are used descriptively and do not imply endorsement, affiliation, or partnership.
 
 Contact: support@trapeak.com

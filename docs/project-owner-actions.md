@@ -45,6 +45,13 @@
 3. Обновить schema или переподключить TRAPEAK в ChatGPT Developer mode.
 4. Вызвать `list_nutrition_entries` и `get_nutrition_summary`.
 
+## Нужно для Profile после deployment
+
+1. Применить production migration `0007_user_profiles.sql`.
+2. Обновить MCP schema в новом AI-диалоге.
+3. Пройти короткую стартовую анкету и сохранить Profile.
+4. Проверить процент полноты, выбор следующих тем и Profile внутри `get_training_context`.
+
 ## Нужно для публичного плагина OpenAI
 
 1. Выбрать publisher: верифицированное физическое лицо или компания.

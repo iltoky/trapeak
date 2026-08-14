@@ -11,6 +11,7 @@
 | 6. Labs / Blood Tests | Структурированные лабораторные показатели и история | Production verified |
 | 7. User-controlled deletion | Owner-scoped удаление питания и лабораторных отчётов через AI и dashboard | Published; authenticated deletion e2e pending |
 | 8. Training context | История 14–56 дней, сравнение нагрузки, последовательность тренировок и питание для выбора сегодняшней тренировки | Published; authenticated MCP e2e pending |
+| 9. User Profile | Цели, здоровье, препараты, lifestyle и progressive onboarding через AI | Implemented; production migration and authenticated MCP e2e pending |
 | Public distribution | Публикация TRAPEAK в каталоге ChatGPT и Codex | Paused by product decision |
 | После MVP | Garmin после API approval, recovery и другие health-источники | Backlog |
 
@@ -28,4 +29,4 @@ OAuth-задача Wahoo описана в [`TRP-011`](../../tasks/TRP-011-wahoo
 
 Автоматическая синхронизация описана в [`TRP-014`](../../tasks/TRP-014-wahoo-webhooks.md), публичная подача OpenAI — в [`TRP-015`](../../tasks/TRP-015-public-openai-plugin.md).
 
-Следующий AI-first этап — единый исторический контекст для рекомендации сегодняшней тренировки в [`TRP-018`](../../tasks/TRP-018-training-context.md). После него профиль пользователя дополнится целями, расписанием, травмами и ограничениями; затем подключатся sleep, HRV и recovery sources. Публичная подача OpenAI остаётся подготовленной, но не запускается до отдельного решения владельца продукта.
+Исторический контекст для рекомендации тренировки описан в [`TRP-018`](../../tasks/TRP-018-training-context.md). Собственный Profile с целями, здоровьем, препаратами, lifestyle и progressive onboarding декомпозирован в [`TRP-019`](../../tasks/TRP-019-user-profile.md). Следующий продуктовый срез — sleep, HRV и recovery sources. Публичная подача OpenAI остаётся подготовленной, но не запускается до отдельного решения владельца продукта.

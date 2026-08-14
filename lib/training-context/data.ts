@@ -5,6 +5,7 @@ import {
   listMcpActivityDetailsBetween,
 } from "../mcp/data";
 import { listNutritionEntriesBetween } from "../nutrition/data";
+import { getUserProfile } from "../profile/data";
 import { buildTrainingContext, type TrainingContext } from "./model";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -19,8 +20,9 @@ export async function getTrainingContext(input: Readonly<{
 }>): Promise<TrainingContext> {
   const historyFrom = new Date(input.asOf.getTime() - input.historyDays * DAY_MS);
   const nutritionFrom = new Date(input.asOf.getTime() - 7 * DAY_MS);
-  const [profiles, activityRows, nutritionRows] = await Promise.all([
+  const [profiles, userProfileResult, activityRows, nutritionRows] = await Promise.all([
     getMcpAthleteProfiles(input.userId),
+    getUserProfile(input.userId),
     listMcpActivityDetailsBetween({
       userId: input.userId,
       from: historyFrom,
@@ -40,6 +42,7 @@ export async function getTrainingContext(input: Readonly<{
     utcOffsetMinutes: input.utcOffsetMinutes,
     historyDays: input.historyDays,
     profiles,
+    userProfile: userProfileResult.record,
     activities: activityRows.slice(0, ACTIVITY_LIMIT),
     nutritionEntries: nutritionRows.slice(0, NUTRITION_LIMIT),
     activityHistoryTruncated: activityRows.length > ACTIVITY_LIMIT,

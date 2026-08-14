@@ -1,5 +1,10 @@
 import type { McpActivityDetails, McpAthleteProfile } from "../mcp/data";
 import type { NutritionEntry } from "../nutrition/data";
+import {
+  calculateProfileCompleteness,
+  isProfileFieldComplete,
+  type UserProfileRecord,
+} from "../profile/model.ts";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 export const HIGH_LOAD_TSS_THRESHOLD = 80;
@@ -47,6 +52,7 @@ export type TrainingContext = Readonly<{
   utcOffsetMinutes: number;
   historyDays: number;
   profiles: readonly McpAthleteProfile[];
+  userProfile: UserProfileRecord | null;
   recentActivities: readonly TrainingContextActivity[];
   loadWindows: readonly TrainingLoadWindow[];
   sequence: Readonly<{
@@ -74,7 +80,10 @@ export type TrainingContext = Readonly<{
     activitiesWithHeartRate: number;
     activitiesWithTrainingStressScore: number;
     providerProfileAvailable: boolean;
-    goalsAndRestrictionsAvailable: false;
+    userProfileAvailable: boolean;
+    profileCompletenessPercent: number;
+    goalsAndRestrictionsAvailable: boolean;
+    healthAndMedicationContextAvailable: boolean;
     sleepAvailable: false;
     recoveryAvailable: false;
     limitations: readonly string[];
@@ -194,6 +203,7 @@ export function buildTrainingContext(input: Readonly<{
   utcOffsetMinutes: number;
   historyDays: number;
   profiles: readonly McpAthleteProfile[];
+  userProfile: UserProfileRecord | null;
   activities: readonly McpActivityDetails[];
   nutritionEntries: readonly NutritionEntry[];
   activityHistoryTruncated?: boolean;
@@ -254,11 +264,35 @@ export function buildTrainingContext(input: Readonly<{
   const daysSinceLastActivity = latestTrainingDate
     ? dateKeyToEpochDay(todayDate) - dateKeyToEpochDay(latestTrainingDate)
     : null;
+  const profileCompleteness = calculateProfileCompleteness(input.userProfile);
+  const goalsAvailable = input.userProfile
+    ? isProfileFieldComplete(input.userProfile, "goals")
+    : false;
+  const healthProfileFields = [
+    "injuries",
+    "healthConditions",
+    "contraindications",
+    "medications",
+  ] as const;
+  const healthAndMedicationContextAvailable = input.userProfile
+    ? healthProfileFields.every(
+      (field) => isProfileFieldComplete(input.userProfile!, field),
+    )
+    : false;
+  const goalsAndRestrictionsAvailable = goalsAvailable && healthAndMedicationContextAvailable;
   const limitations = [
-    "TRAPEAK does not yet store custom goals, schedule, injuries, or restrictions.",
-    "Sleep, HRV, readiness, and recovery sources are not connected yet.",
+    "Connected sleep, HRV, readiness, and recovery measurements are not available yet; a profile sleep schedule is not a current recovery measurement.",
     "High-load signals use provider TSS >= 80 and do not by themselves classify a workout as anaerobic.",
   ];
+  if (!input.userProfile) {
+    limitations.unshift(
+      "No custom TRAPEAK user profile is stored; goals, schedule, health context, and medications are unavailable.",
+    );
+  } else if (!goalsAndRestrictionsAvailable) {
+    limitations.unshift(
+      `The custom user profile is ${profileCompleteness.percent}% complete; goals or health and medication context is incomplete.`,
+    );
+  }
   if (history.activitiesWithTrainingStressScore < history.activityCount) {
     limitations.push(
       "Some activities have no provider TSS; use their type, name, duration, heart rate, and sequence as supporting context.",
@@ -270,6 +304,7 @@ export function buildTrainingContext(input: Readonly<{
     utcOffsetMinutes: input.utcOffsetMinutes,
     historyDays: input.historyDays,
     profiles: [...input.profiles],
+    userProfile: input.userProfile,
     recentActivities: activities,
     loadWindows: [last7Days, previous7Days, history],
     sequence: {
@@ -311,7 +346,10 @@ export function buildTrainingContext(input: Readonly<{
       ).length,
       activitiesWithTrainingStressScore: history.activitiesWithTrainingStressScore,
       providerProfileAvailable: input.profiles.length > 0,
-      goalsAndRestrictionsAvailable: false,
+      userProfileAvailable: input.userProfile !== null,
+      profileCompletenessPercent: profileCompleteness.percent,
+      goalsAndRestrictionsAvailable,
+      healthAndMedicationContextAvailable,
       sleepAvailable: false,
       recoveryAvailable: false,
       limitations,

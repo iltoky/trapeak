@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { buildTrainingContext } from "./model.ts";
+import { emptyUserProfile } from "../profile/model.ts";
 
 function activity(input: Readonly<{
   id: string;
@@ -44,6 +45,7 @@ test("builds historical load windows and consecutive workout signals", () => {
     utcOffsetMinutes: 120,
     historyDays: 28,
     profiles: [],
+    userProfile: null,
     activities: [
       activity({
         id: "00000000-0000-4000-8000-000000000001",
@@ -87,6 +89,7 @@ test("groups nutrition by the user's local date and reports missing sources", ()
     utcOffsetMinutes: 120,
     historyDays: 28,
     profiles: [],
+    userProfile: null,
     activities: [activity({
       id: "00000000-0000-4000-8000-000000000001",
       startedAt: "2026-08-13T20:00:00.000Z",
@@ -122,6 +125,7 @@ test("does not turn an empty nutrition log into zero calorie intake", () => {
     utcOffsetMinutes: 0,
     historyDays: 28,
     profiles: [],
+    userProfile: null,
     activities: [],
     nutritionEntries: [],
   });
@@ -129,4 +133,41 @@ test("does not turn an empty nutrition log into zero calorie intake", () => {
   assert.equal(context.nutrition.today, null);
   assert.equal(context.sequence.daysSinceLastActivity, null);
   assert.equal(context.comparison.sevenDayTrainingStressChangePercent, null);
+});
+
+test("includes custom goals, health context, and medications", () => {
+  const context = buildTrainingContext({
+    asOf: new Date("2026-08-14T08:00:00.000Z"),
+    utcOffsetMinutes: 120,
+    historyDays: 28,
+    profiles: [],
+    userProfile: {
+      profile: {
+        ...emptyUserProfile,
+        goals: [{
+          type: "running_distance",
+          description: "Run 10 km comfortably",
+          priority: "primary",
+        }],
+        injuries: [],
+        healthConditions: [],
+        contraindications: [],
+        medications: [{
+          name: "Example medication",
+          dosage: "10 mg",
+        }],
+      },
+      fieldStatuses: {},
+      createdAt: "2026-08-14T07:00:00.000Z",
+      updatedAt: "2026-08-14T07:00:00.000Z",
+    },
+    activities: [],
+    nutritionEntries: [],
+  });
+
+  assert.equal(context.userProfile?.profile.medications?.[0]?.dosage, "10 mg");
+  assert.equal(context.dataAvailability.userProfileAvailable, true);
+  assert.equal(context.dataAvailability.goalsAndRestrictionsAvailable, true);
+  assert.equal(context.dataAvailability.healthAndMedicationContextAvailable, true);
+  assert.ok(context.dataAvailability.profileCompletenessPercent > 0);
 });
