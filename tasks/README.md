@@ -15,6 +15,7 @@
 - [TRP-022 — Актуализация публичных материалов и SEO](TRP-022-public-content-seo.md)
 - [TRP-023 — Wahoo Production approval](TRP-023-wahoo-production-approval.md)
 - [TRP-024 — Делегированный доступ к данным](TRP-024-delegated-data-access.md)
+- [TRP-025 — Разрешения для подключённых AI](TRP-025-ai-client-permissions.md)
 - [Этап 1 — авторизация и подключение Garmin (будущий этап)](stage-1-auth-and-garmin/README.md)
 
 Текущая разработка ведётся напрямую в `main` с обязательными typecheck, tests и production build перед публикацией. Дополнительные постоянные рабочие ветки не создаются. Старые Garmin-задачи сохранены и возобновятся после получения API-доступа.
