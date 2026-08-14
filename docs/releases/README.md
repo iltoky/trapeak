@@ -2,7 +2,7 @@
 
 | Версия | Статус | Описание |
 |---|---|---|
-| [v0.11.0](v0.11.0.md) | Ready for production publication; authenticated e2e deferred | Новый public experience, use cases, SEO и data-category dashboard |
+| [v0.11.0](v0.11.0.md) | Published; public production checks passed; authenticated e2e deferred | Новый public experience, use cases, SEO и data-category dashboard |
 | [v0.10.0](v0.10.0.md) | Published; production migration applied; authenticated e2e pending | Delegated read-only access по email и категориям данных |
 | [v0.9.2](v0.9.2.md) | Published; production migration applied; authenticated MCP e2e pending | Упрощённый Profile, wearable-only daily context и каталог таблиц |
 | [v0.9.1](v0.9.1.md) | Published; production migration applied; authenticated MCP e2e pending | Дата рождения, история и динамика веса, напоминания через AI |
