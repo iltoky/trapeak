@@ -1,6 +1,6 @@
 # TRP-018 — единый контекст для сегодняшней тренировки
 
-Статус: **Implemented; production publication pending**
+Статус: **Published; authenticated MCP e2e pending**
 
 ## Description
 

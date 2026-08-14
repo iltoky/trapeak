@@ -10,7 +10,7 @@
 | 5. Nutrition | AI-first журнал питания, дневные итоги и MCP | Production verified |
 | 6. Labs / Blood Tests | Структурированные лабораторные показатели и история | Production verified |
 | 7. User-controlled deletion | Owner-scoped удаление питания и лабораторных отчётов через AI и dashboard | Published; authenticated deletion e2e pending |
-| 8. Training context | История 14–56 дней, сравнение нагрузки, последовательность тренировок и питание для выбора сегодняшней тренировки | Implemented; production publication pending |
+| 8. Training context | История 14–56 дней, сравнение нагрузки, последовательность тренировок и питание для выбора сегодняшней тренировки | Published; authenticated MCP e2e pending |
 | Public distribution | Публикация TRAPEAK в каталоге ChatGPT и Codex | Paused by product decision |
 | После MVP | Garmin после API approval, recovery и другие health-источники | Backlog |
 
