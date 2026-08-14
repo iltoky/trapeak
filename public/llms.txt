@@ -30,6 +30,7 @@ Product status: production private beta. Authenticated beta users can connect Wa
 - Custom profile tools save only user-provided facts, including optional medication details; profile completion is not a health score.
 - Profile stores date of birth rather than fixed age. Weight measurements are a separate dated history with trends and optional update reminders.
 - Profile keeps only durable user-provided context, including qualitative work activity. Sleep, daily activity, provider stress, HRV, readiness, and recovery must come from connected wearable sources; TRAPEAK does not replace missing measurements with AI estimates.
+- Training context is multi-factor decision support, not a readiness score or automatic prescription. A TSS threshold, week-over-week change, or back-to-back demanding sessions must be interpreted relative to the individual and never used as a standalone rule. When fresh subjective readiness data is unavailable, ask briefly about fatigue/energy, soreness or pain, illness symptoms, sleep quality, willingness to train, and available time.
 - Third-party names and trademarks are used descriptively and do not imply endorsement, affiliation, or partnership.
 
 Contact: support@trapeak.com
