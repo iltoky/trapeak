@@ -2,6 +2,7 @@
 
 | Версия | Статус | Описание |
 |---|---|---|
+| [v0.8.0](v0.8.0.md) | Implemented; production publication pending | Исторический контекст тренировок и питания для выбора сегодняшней тренировки |
 | [v0.7.0](v0.7.0.md) | Published; authenticated deletion e2e pending | Безопасное owner-scoped удаление питания и лабораторных отчётов через MCP и dashboard |
 | [v0.6.1](v0.6.1.md) | Published | Repair production Nutrition schema и синхронизация документации private beta |
 | [v0.6.0](v0.6.0.md) | Published; production e2e passed | AI-запись питания и структурированные лабораторные результаты через MCP |

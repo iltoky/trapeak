@@ -4,6 +4,7 @@ import { createMcpHandler, withMcpAuth } from "mcp-handler";
 import { z } from "zod";
 
 import { requireMcpUserId } from "@/lib/mcp/auth";
+import { getIsoUtcOffsetMinutes } from "@/lib/mcp/dates";
 import {
   createLabReport,
   deleteLabReport,
@@ -21,6 +22,7 @@ import {
   getMcpAthleteProfiles,
   listMcpActivities,
 } from "@/lib/mcp/data";
+import { getTrainingContext } from "@/lib/training-context/data";
 import {
   createNutritionEntry,
   deleteNutritionEntry,
@@ -62,6 +64,87 @@ const activityDetailsSchema = activitySummarySchema.extend({
   isManual: z.boolean().nullable(),
   isEdited: z.boolean().nullable(),
   syncedAt: z.string(),
+});
+const athleteProfileSchema = z.object({
+  provider: providerSchema,
+  displayName: z.string().nullable(),
+  heightMeters: nullableNumber,
+  weightKilograms: nullableNumber,
+  birthDate: z.string().nullable(),
+  genderCode: z.number().nullable(),
+  syncedAt: z.string(),
+});
+const trainingContextActivitySchema = activityDetailsSchema.extend({
+  localDate: dateSchema,
+});
+const trainingLoadTypeSchema = z.object({
+  provider: providerSchema,
+  activityTypeId: z.string().nullable(),
+  activityTypeName: z.string().nullable(),
+  activityCount: z.number().int(),
+  durationSeconds: z.number(),
+  distanceMeters: z.number(),
+  trainingStressScore: nullableNumber,
+});
+const trainingLoadWindowSchema = z.object({
+  label: z.enum(["last7Days", "previous7Days", "history"]),
+  from: z.string(),
+  to: z.string(),
+  activityCount: z.number().int(),
+  trainingDayCount: z.number().int(),
+  durationSeconds: z.number(),
+  activeDurationSeconds: z.number(),
+  distanceMeters: z.number(),
+  caloriesKilocalories: z.number(),
+  trainingStressScore: nullableNumber,
+  activitiesWithTrainingStressScore: z.number().int(),
+  byActivityType: z.array(trainingLoadTypeSchema),
+});
+const trainingNutritionDaySchema = z.object({
+  date: dateSchema,
+  entryCount: z.number().int(),
+  caloriesKilocalories: z.number(),
+  proteinGrams: z.number(),
+  carbohydratesGrams: z.number(),
+  fatGrams: z.number(),
+});
+const trainingContextSchema = z.object({
+  asOf: z.string(),
+  utcOffsetMinutes: z.number().int(),
+  historyDays: z.number().int(),
+  profiles: z.array(athleteProfileSchema),
+  recentActivities: z.array(trainingContextActivitySchema),
+  loadWindows: z.array(trainingLoadWindowSchema),
+  sequence: z.object({
+    latestTrainingDate: dateSchema.nullable(),
+    daysSinceLastActivity: z.number().int().nullable(),
+    consecutiveTrainingDays: z.number().int(),
+    activitiesLast72Hours: z.number().int(),
+    highLoadTssThreshold: z.number(),
+    highLoadActivitiesLast72Hours: z.number().int(),
+    latestHighLoadActivityStreak: z.number().int(),
+  }),
+  comparison: z.object({
+    sevenDayDurationChangePercent: nullableNumber,
+    sevenDayDistanceChangePercent: nullableNumber,
+    sevenDayTrainingStressChangePercent: nullableNumber,
+  }),
+  nutrition: z.object({
+    today: trainingNutritionDaySchema.nullable(),
+    recentDays: z.array(trainingNutritionDaySchema),
+    loggedDayCount: z.number().int(),
+  }),
+  dataAvailability: z.object({
+    activityHistoryTruncated: z.boolean(),
+    nutritionHistoryTruncated: z.boolean(),
+    activitiesWithHeartRate: z.number().int(),
+    activitiesWithTrainingStressScore: z.number().int(),
+    providerProfileAvailable: z.boolean(),
+    goalsAndRestrictionsAvailable: z.literal(false),
+    sleepAvailable: z.literal(false),
+    recoveryAvailable: z.literal(false),
+    limitations: z.array(z.string()),
+  }),
 });
 const nutritionEntrySchema = z.object({
   id: z.string().uuid(),
@@ -122,15 +205,7 @@ const handler = createMcpHandler(
         description:
           "Use this to read the authenticated TRAPEAK user's normalized athlete profile from connected wearable providers.",
         outputSchema: z.object({
-          profiles: z.array(z.object({
-            provider: providerSchema,
-            displayName: z.string().nullable(),
-            heightMeters: nullableNumber,
-            weightKilograms: nullableNumber,
-            birthDate: z.string().nullable(),
-            genderCode: z.number().nullable(),
-            syncedAt: z.string(),
-          })),
+          profiles: z.array(athleteProfileSchema),
         }),
         annotations: {
           readOnlyHint: true,
@@ -150,6 +225,49 @@ const handler = createMcpHandler(
               : "No synchronized athlete profile is available.",
           }],
           structuredContent: result,
+        };
+      },
+    );
+
+    server.registerTool(
+      "get_training_context",
+      {
+        title: "Get context for today's workout",
+        description:
+          "Call this before selecting or building today's workout. It returns the authenticated user's chronological workout history, 7-day versus previous-7-day load, longer history, recent nutrition, and data limitations. Evaluate the sequence of previous workouts, not only today's data. High-load signals use provider TSS and are not a definitive anaerobic classification.",
+        inputSchema: z.object({
+          asOf: z.string().datetime({ offset: true }).optional().describe(
+            "Decision time as an ISO 8601 timestamp with offset. Defaults to the current server time.",
+          ),
+          utcOffsetMinutes: z.number().int().min(-720).max(840).optional().describe(
+            "Optional override for the user's current UTC offset in minutes. Otherwise it is inferred from asOf, or UTC is used when asOf is omitted.",
+          ),
+          historyDays: z.number().int().min(14).max(56).default(28).describe(
+            "How many previous days of workouts to include. Use 28 unless a different horizon is needed.",
+          ),
+        }),
+        outputSchema: z.object({ context: trainingContextSchema }),
+        annotations: {
+          readOnlyHint: true,
+          destructiveHint: false,
+          openWorldHint: false,
+        },
+      },
+      async (input, context) => {
+        const userId = requireMcpUserId(context.http?.authInfo);
+        const trainingContext = await getTrainingContext({
+          userId,
+          asOf: input.asOf ? new Date(input.asOf) : new Date(),
+          utcOffsetMinutes: input.utcOffsetMinutes
+            ?? getIsoUtcOffsetMinutes(input.asOf),
+          historyDays: input.historyDays,
+        });
+        return {
+          content: [{
+            type: "text",
+            text: `Prepared ${trainingContext.historyDays}-day training context with ${trainingContext.recentActivities.length} activities. Review recent workout sequence and data limitations before recommending today's session.`,
+          }],
+          structuredContent: { context: trainingContext },
         };
       },
     );
@@ -569,9 +687,9 @@ const handler = createMcpHandler(
     );
   },
   {
-    serverInfo: { name: "trapeak", version: "0.7.0" },
+    serverInfo: { name: "trapeak", version: "0.8.0" },
     instructions:
-      "TRAPEAK stores authenticated fitness, nutrition, and laboratory data. Call create tools only after the user explicitly asks to save data. Call deletion tools only after the user explicitly asks to permanently delete a specific record, and pass confirm=true only for that explicit request. Nutrition estimates must include assumptions. Laboratory tools preserve reported values, units, ranges, and flags without inventing missing data or diagnosing conditions. Read and deletion tools may act only on records owned by the authenticated user.",
+      "TRAPEAK stores authenticated fitness, nutrition, and laboratory data. Before recommending today's workout, call get_training_context and evaluate previous workouts and accumulated load, not only today's data. Explicitly check whether the newest activities contain back-to-back hard, interval, or anaerobic sessions, including when provider TSS is missing. Treat availability flags and limitations as part of the answer. Call create tools only after the user explicitly asks to save data. Call deletion tools only after the user explicitly asks to permanently delete a specific record, and pass confirm=true only for that explicit request. Nutrition estimates must include assumptions. Laboratory tools preserve reported values, units, ranges, and flags without inventing missing data or diagnosing conditions. Read and deletion tools may act only on records owned by the authenticated user.",
   },
 );
 

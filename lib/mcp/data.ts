@@ -207,3 +207,29 @@ export async function getMcpActivity(
 
   return rows[0] ? toActivityDetails(rows[0]) : null;
 }
+
+export async function listMcpActivityDetailsBetween(input: Readonly<{
+  userId: string;
+  from: Date;
+  to: Date;
+  limit: number;
+}>): Promise<readonly McpActivityDetails[]> {
+  const sql = getDatabase();
+  const rows = await sql`
+    SELECT id, provider, name, activity_type_id, started_at,
+           duration_seconds, active_duration_seconds, paused_duration_seconds,
+           distance_meters, elevation_gain_meters, calories_kilocalories,
+           average_heart_rate_bpm, average_cadence_rpm,
+           average_speed_meters_per_second, average_power_watts,
+           normalized_power_watts, training_stress_score, work_joules,
+           time_zone, is_manual, is_edited, synced_at
+      FROM fitness_activities
+     WHERE user_id = ${input.userId}
+       AND started_at >= ${input.from.toISOString()}::timestamptz
+       AND started_at <= ${input.to.toISOString()}::timestamptz
+     ORDER BY started_at DESC
+     LIMIT ${input.limit}
+  ` as ActivityRow[];
+
+  return rows.map(toActivityDetails);
+}

@@ -21,3 +21,15 @@ export function toUtcNextDayStart(value: string | undefined): string | null {
   date.setUTCDate(date.getUTCDate() + 1);
   return date.toISOString();
 }
+
+export function getIsoUtcOffsetMinutes(value: string | undefined): number {
+  if (!value || value.endsWith("Z")) {
+    return 0;
+  }
+  const match = value.match(/([+-])(\d{2}):(\d{2})$/);
+  if (!match) {
+    return 0;
+  }
+  const minutes = Number(match[2]) * 60 + Number(match[3]);
+  return match[1] === "-" ? -minutes : minutes;
+}

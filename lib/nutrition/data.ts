@@ -171,6 +171,27 @@ export async function listNutritionEntries(input: Readonly<{
   return rows.map(toEntry);
 }
 
+export async function listNutritionEntriesBetween(input: Readonly<{
+  userId: string;
+  from: Date;
+  to: Date;
+  limit: number;
+}>): Promise<readonly NutritionEntry[]> {
+  const sql = getDatabase();
+  const rows = await sql`
+    SELECT id, consumed_at, meal_type, COALESCE(description, title) AS description,
+           calories_kilocalories, protein_grams, carbohydrates_grams,
+           fat_grams, notes, estimated, estimation_notes, source
+      FROM nutrition_entries
+     WHERE user_id = ${input.userId}
+       AND consumed_at >= ${input.from.toISOString()}::timestamptz
+       AND consumed_at <= ${input.to.toISOString()}::timestamptz
+     ORDER BY consumed_at DESC
+     LIMIT ${input.limit}
+  ` as NutritionEntryRow[];
+  return rows.map(toEntry);
+}
+
 export async function getNutritionDaySummaries(input: Readonly<{
   userId: string;
   from: string;
