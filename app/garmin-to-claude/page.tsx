@@ -5,6 +5,7 @@ export const metadata: Metadata = {
   title: "Garmin to Claude via MCP — Planned Connection",
   description: "See how TRAPEAK plans to connect user-authorized Garmin activity data to Claude through a secure, user-specific MCP endpoint.",
   alternates: { canonical: "/garmin-to-claude" },
+  robots: { index: false, follow: true },
   openGraph: {
     title: "Garmin to Claude via MCP — Planned Connection",
     description: "A planned MCP path for using authorized Garmin activity data with Claude.",
