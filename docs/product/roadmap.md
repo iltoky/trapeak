@@ -12,7 +12,7 @@
 | 7. User-controlled deletion | Owner-scoped удаление питания и лабораторных отчётов через AI и dashboard | Published; authenticated deletion e2e pending |
 | 8. Training context | История 14–56 дней, сравнение нагрузки, последовательность тренировок и питание для выбора сегодняшней тренировки | Published; authenticated MCP e2e pending |
 | 9. User Profile | Цели, здоровье, препараты, lifestyle и progressive onboarding через AI | Published; authenticated MCP e2e passed |
-| 10. Weight history | Дата рождения вместо возраста, датированные измерения веса, динамика и напоминания | Implemented; production migration and authenticated MCP e2e pending |
+| 10. Weight history | Дата рождения вместо возраста, датированные измерения веса, динамика и напоминания | Published; production migration and authenticated MCP e2e pending |
 | Public distribution | Публикация TRAPEAK в каталоге ChatGPT и Codex | Paused by product decision |
 | После MVP | Garmin после API approval, recovery и другие health-источники | Backlog |
 

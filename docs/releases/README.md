@@ -2,7 +2,7 @@
 
 | Версия | Статус | Описание |
 |---|---|---|
-| [v0.9.1](v0.9.1.md) | Implemented; production migration and authenticated MCP e2e pending | Дата рождения, история и динамика веса, напоминания через AI |
+| [v0.9.1](v0.9.1.md) | Published; production migration and authenticated MCP e2e pending | Дата рождения, история и динамика веса, напоминания через AI |
 | [v0.9.0](v0.9.0.md) | Published; authenticated MCP e2e passed | User Profile, препараты, полнота и progressive onboarding через AI |
 | [v0.8.0](v0.8.0.md) | Published; authenticated MCP e2e pending | Исторический контекст тренировок и питания для выбора сегодняшней тренировки |
 | [v0.7.0](v0.7.0.md) | Published; authenticated deletion e2e pending | Безопасное owner-scoped удаление питания и лабораторных отчётов через MCP и dashboard |
