@@ -19,7 +19,9 @@ OAuth discovery endpoints:
 
 Все SQL-запросы MCP обязательно фильтруются по проверенному `user_id`. `get_activity` дополнительно связывает внутренний activity UUID с тем же владельцем. Неавторизованный request получает RFC 9728-compatible `WWW-Authenticate` challenge.
 
-## Инструменты v0.9.2
+Исключение с явным consent — delegated read. Получатель сначала получает собственный `grantId` через `list_shared_subjects`; сервер сам разрешает owner identity и проверяет статус, expiry и категорию. Произвольный `user_id` никогда не принимается. OAuth `clientId` записывается в audit, но v0.10.0 ещё не применяет отдельную client policy: фактический доступ AI ограничен категориями human grant.
+
+## Инструменты v0.10.0
 
 | Tool | Назначение | Изменяет данные |
 |---|---|---|
@@ -42,8 +44,15 @@ OAuth discovery endpoints:
 | `get_lab_report` | Полный отчёт с показателями | Нет |
 | `get_lab_result_history` | История одного точного названия показателя | Нет |
 | `delete_lab_report` | Удалить отчёт владельца и все его показатели | Да, необратимо |
+| `list_shared_subjects` | Активные grants от одного или нескольких владельцев | Нет |
+| `get_shared_training_context` | Training context одного владельца с редактированием невыданных health/nutrition полей | Нет |
+| `list_shared_nutrition` | Питание и история веса при наличии `nutrition` | Нет |
+| `list_shared_health` | Health profile и лабораторные отчёты при наличии `health` | Нет |
+| `get_shared_recovery` | Доступность recovery-источников при наличии `recovery` | Нет |
 
 Read tools имеют `readOnlyHint: true`. Create tools идемпотентны и не помечаются destructive. Delete tools имеют `destructiveHint: true`, `idempotentHint: true` и требуют `confirm: true` после явной команды пользователя. Все инструменты имеют `openWorldHint: false`.
+
+Один получатель может принять grants от нескольких спортсменов. Каждый shared tool работает ровно с одним `grantId`; AI не смешивает спортсменов и не делает сравнение между ними без явного запроса пользователя и разрешений каждого grant.
 
 ## Контекст для сегодняшней тренировки
 
