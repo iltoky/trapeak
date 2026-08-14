@@ -9,8 +9,8 @@ import {
 import type { DataPermission } from "@/lib/access/permissions";
 import { isAuthConfigured } from "@/lib/auth/config";
 import { requireAuthUser } from "@/lib/auth/current-user";
+import { AccountHeader } from "../account-header";
 import { DashboardNav } from "../dashboard/dashboard-nav";
-import { SiteHeader } from "../site-header";
 import { AccessManager, RevokeAccessButton } from "./access-manager";
 
 export const metadata: Metadata = { title: "Shared access", robots: { index: false, follow: false } };
@@ -36,7 +36,7 @@ export default async function AccessPage() {
   ]);
 
   return <>
-    <SiteHeader />
+    <AccountHeader />
     <main className="dashboard-page"><div className="dashboard-shell shell"><DashboardNav />
       <div className="dashboard-content access-dashboard">
         <header className="dashboard-hero compact"><div><p className="section-index">SHARED ACCESS</p><h1>Your data.<br />Your permission.</h1></div><p>Invite a coach, doctor, dietitian or another person by email. There are no roles: choose the exact categories, set an expiry and revoke access at any time.</p></header>

@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
+import "./product.css";
+
 import { BrandIcon, BrandLogo } from "./brand";
 import { SiteHeader } from "./site-header";
 

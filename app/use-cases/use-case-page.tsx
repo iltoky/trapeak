@@ -1,5 +1,8 @@
 import Link from "next/link";
 
+import "../guides.css";
+import "../product.css";
+
 import { BrandIcon, BrandLogo } from "../brand";
 import { CopyRequestButton } from "../copy-request-button";
 import { SiteHeader } from "../site-header";
