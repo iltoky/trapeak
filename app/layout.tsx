@@ -1,13 +1,8 @@
 import type { Metadata } from "next";
-import { ClerkProvider } from "@clerk/nextjs";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Geist, Geist_Mono } from "next/font/google";
-import { isAuthConfigured } from "@/lib/auth/config";
 import "./globals.css";
-import "./guides.css";
-import "./auth.css";
-import "./product.css";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -43,35 +38,14 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const content = (
-    <>
-      {children}
-      <Analytics />
-      <SpeedInsights />
-    </>
-  );
-
   return (
     <html lang="en">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        {isAuthConfigured() ? (
-          <ClerkProvider
-            appearance={{
-              options: {
-                logoImageUrl: "/brand/trapeak-logo.svg",
-                logoLinkUrl: "https://trapeak.com",
-                privacyPageUrl: "https://trapeak.com/privacy",
-                termsPageUrl: "https://trapeak.com/terms",
-              },
-            }}
-          >
-            {content}
-          </ClerkProvider>
-        ) : (
-          content
-        )}
+        {children}
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );

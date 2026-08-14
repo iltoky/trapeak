@@ -1,21 +1,18 @@
+import { UserButton } from "@clerk/nextjs";
 import Link from "next/link";
-import { isAuthConfigured } from "@/lib/auth/config";
+
 import { BrandLogo } from "./brand";
 
-function HeaderActions({ authConfigured }: { authConfigured: boolean }) {
-  return authConfigured ? (
+function AccountActions() {
+  return (
     <div className="nav-auth">
-      <Link className="nav-sign-in" href="/sign-in">Sign in</Link>
-      <Link className="button black nav-cta" href="/sign-up">Create account</Link>
+      <Link className="nav-sign-in" href="/dashboard">Dashboard</Link>
+      <UserButton />
     </div>
-  ) : (
-    <a className="button black nav-cta" href="mailto:support@trapeak.com?subject=TRAPEAK%20early%20access">Join early access</a>
   );
 }
 
-export function SiteHeader() {
-  const authConfigured = isAuthConfigured();
-
+export function AccountHeader() {
   return (
     <header className="nav shell">
       <Link className="wordmark" href="/" aria-label="TRAPEAK home"><BrandLogo /></Link>
@@ -25,7 +22,7 @@ export function SiteHeader() {
         <Link href="/ai-guides">Use cases</Link>
         <Link href="/#faq">FAQ</Link>
       </nav>
-      <div className="desktop-actions"><HeaderActions authConfigured={authConfigured} /></div>
+      <div className="desktop-actions"><AccountActions /></div>
       <details className="mobile-menu">
         <summary>
           <span>Menu</span>
@@ -38,7 +35,7 @@ export function SiteHeader() {
             <Link href="/ai-guides"><span>03</span>Use cases</Link>
             <Link href="/#faq"><span>04</span>FAQ</Link>
           </nav>
-          <div className="mobile-menu-actions"><HeaderActions authConfigured={authConfigured} /></div>
+          <div className="mobile-menu-actions"><AccountActions /></div>
         </div>
       </details>
     </header>

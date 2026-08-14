@@ -1,4 +1,6 @@
 import Link from "next/link";
+
+import "./guides.css";
 import { SiteHeader } from "./site-header";
 import { BrandIcon, BrandLogo } from "./brand";
 

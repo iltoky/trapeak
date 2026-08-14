@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 
 import { SiteHeader } from "./site-header";
+import "./auth.css";
 
 type AuthShellProps = Readonly<{
   eyebrow: string;
