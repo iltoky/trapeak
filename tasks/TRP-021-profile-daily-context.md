@@ -1,6 +1,6 @@
 # TRP-021 — Упрощение Profile и каталог данных
 
-Статус: **Published; production migration and authenticated MCP e2e pending**
+Статус: **Published; production migration applied; authenticated MCP e2e pending**
 
 ## Description
 
@@ -17,7 +17,7 @@
 
 ## Release Actions
 
-1. Применить migration `0009_profile_daily_context.sql` после `0008_weight_history.sql`.
+1. [x] Применить migration `0009_profile_daily_context.sql` после `0008_weight_history.sql`.
 2. [x] Опубликовать MCP `0.9.2`.
 3. После migration открыть новый AI-диалог для обновления schema.
 4. Проверить Profile и `get_training_context` на production account.
@@ -31,7 +31,7 @@
 
 ## QA e2e tests
 
-1. [ ] Применить migration `0009_profile_daily_context.sql`.
+1. [x] Применить migration `0009_profile_daily_context.sql`.
 2. [ ] Открыть новый AI-диалог и вызвать `get_user_profile`.
 3. [ ] Убедиться, что старый work context сохранён под новым именем.
 4. [ ] Убедиться, что AI не предлагает постоянные вопросы о сне, стрессе, кофеине и алкоголе.

@@ -1,56 +1,85 @@
 # Публичная подача TRAPEAK в OpenAI
 
-Источник истины: [официальный процесс публикации OpenAI](https://developers.openai.com/plugins/deploy/submission).
+Источники истины:
 
-## Listing
+- [Submit plugins](https://developers.openai.com/plugins/deploy/submission);
+- [MCP server review requirements](https://developers.openai.com/plugins/deploy/app-review);
+- [Plugin guidelines](https://developers.openai.com/plugins/app-guidelines).
+
+## Можно ли публиковать как физическое лицо
+
+Да. В OpenAI Platform для public submission можно выбрать verified individual identity и публиковаться под собственным именем; отдельное юридическое лицо не является обязательным. Имя publisher должно совпадать с публичными website, support, Privacy и Terms. Текущие legal-тексты TRAPEAK с формулировкой `operator to be determined` до submission необходимо заменить.
+
+Organization owner уже имеет нужные права. Для другого submitter требуется Apps Management Write / `api.apps.write`; для просмотра drafts и статуса — read permission. MCP-backed plugin нужно создавать в OpenAI project с global data residency: проекты с EU data residency сейчас не принимаются на review.
+
+## Listing draft
 
 - **Name:** TRAPEAK
-- **Short description:** Connect your authorized fitness data to AI through a secure, read-only MCP interface.
-- **Long description:** TRAPEAK lets users connect supported fitness services and make their normalized athlete profile and workout history available to ChatGPT and Codex. The plugin is read-only: it can retrieve profiles, list activities, and return detailed metrics for a selected activity. TRAPEAK never exposes provider tokens or raw provider payloads to the AI client.
+- **Short description:** Keep your fitness and health history independent from any AI, then use it securely in ChatGPT and Codex.
+- **Long description:** TRAPEAK is a user-controlled data layer for authorized Wahoo workouts, nutrition, laboratory reports, dated weight history and a custom training profile. It gives ChatGPT and Codex owner-scoped context for reviewing past training, saving user-requested records and helping the user choose today's workout. Read operations never expose provider tokens or raw payloads. Write operations run only after an explicit request, repeated creates are idempotent, and irreversible deletions require explicit confirmation.
 - **Website:** `https://trapeak.com`
-- **Support:** `mailto:support@trapeak.com`
+- **Support:** public `https://trapeak.com/support` or another final public support URL; `mailto:` alone is not used as the listing URL.
 - **Privacy:** `https://trapeak.com/privacy`
 - **Terms:** `https://trapeak.com/terms`
 - **Data deletion:** `https://trapeak.com/data-deletion`
 - **MCP URL type:** Universal
 - **MCP URL:** `https://trapeak.com/mcp`
 - **Authentication:** OAuth
-- **Category:** Health & Fitness, если эта категория доступна в portal.
-- **Countries:** выбирать только страны, для которых готовы support, terms и privacy.
+- **Category:** Health & Fitness, if available in the portal.
+- **Countries:** only locations where publisher, support, terms and privacy are ready.
+
+## Materials required before opening the form
+
+- verified individual or business identity;
+- production logo and listing copy;
+- public website, support, Privacy and Terms URLs with matching publisher identity;
+- domain verification access for `/.well-known/openai-apps-challenge`;
+- global-data-residency OpenAI project and Apps Management Write permission;
+- reviewer account without MFA, SMS or email confirmation;
+- accurate metadata and annotations for every MCP tool;
+- at least five positive and three negative reproducible tests;
+- release notes and country availability.
 
 ## Starter prompts
 
-1. Show my latest workouts and summarize the key metrics.
-2. Analyze my most recent run using only my TRAPEAK data.
-3. Compare my last two workouts and highlight meaningful differences.
-4. Show my athlete profile and explain which fields are available.
+1. Show my recent workouts and recommend today's training using my previous load, profile and available nutrition context.
+2. Save this meal with estimated calories and macros, including your assumptions.
+3. Show the history of this laboratory indicator with dates, units and reference ranges.
+4. Start a short TRAPEAK onboarding questionnaire and tell me my profile completeness after saving my answers.
+5. Show my weight trend over the available 7, 30 and 90 day intervals.
 
 ## Positive test cases
 
-1. `Show my athlete profile.` → `get_athlete_profile`; returns only the authenticated user's normalized profiles.
-2. `Show my two latest workouts.` → `list_activities(limit: 2)`; returns at most two newest activities.
-3. `Give me all available metrics for this workout.` → `get_activity(id)` after listing; returns normalized details without raw payload.
-4. `Show workouts from 2026-08-01 through 2026-08-31.` → `list_activities(from, to)`; applies an inclusive date range.
-5. `Show only my Wahoo workouts.` → `list_activities(provider: "wahoo")`; returns Wahoo activities owned by the authenticated user.
+1. `Show my two latest workouts.` → `list_activities(limit: 2)` and then relevant `get_activity` calls; only the authenticated owner's data is returned.
+2. `What workout should I do today?` → `get_training_context(historyDays: 28)`; answer evaluates previous sequence/load and respects unavailable sleep/recovery flags.
+3. `Save breakfast: two eggs and avocado; estimate macros.` → `create_nutrition_entry`; assumptions are present and a repeated identical request returns `created: false`.
+4. `Show today's nutrition totals.` → `get_nutrition_summary`; dates use the specified user offset and an empty log is not presented as zero intake.
+5. `Save this structured blood report.` → `create_lab_report`; reported values, units, ranges and flags are preserved and repeat submission creates no duplicate.
+6. `Show my ALT history.` → `get_lab_result_history`; points include collection dates and original units without diagnosis.
+7. `Show my TRAPEAK profile and missing topics.` → `get_user_profile`; returns completeness as data completeness, not a health score.
+8. `Save my exact weight measured now: 90 kg.` → `create_weight_entry`; returns a dated owner-scoped point and no duplicate on exact repeat.
 
 ## Negative test cases
 
-1. `Delete my latest workout.` → do not call a write tool; explain that TRAPEAK is read-only.
-2. Call `get_activity` with a valid UUID belonging to another account → return `activity: null` without confirming that the record exists.
-3. Call MCP without a valid OAuth token → return `401` with protected-resource metadata; no fitness data is returned.
+1. Call any owner-scoped read with another user's internal record ID → return not found/null without revealing ownership or existence.
+2. `Delete my latest laboratory report` without identifying the record and explicit confirmation → list/clarify first; do not call a destructive tool until the user explicitly confirms the specific deletion.
+3. `Infer my medications and sleep from my workouts and save them.` → refuse to invent or save these facts; medical Profile fields require explicit user statements, and sleep must come from a supported wearable source.
 
 ## Review account fixture
 
-- Separate email controlled by TRAPEAK.
-- Password login without MFA, SMS or mandatory email challenge during review.
-- Connected Wahoo test account with at least two non-sensitive completed activities.
-- No real customer data.
+- Separate email controlled by TRAPEAK with password login and no MFA or additional challenge.
+- Connected non-sensitive Wahoo test account with at least two completed activities.
+- Reproducible Profile, nutrition, dated weight and laboratory fixtures matching the test cases.
+- No real customer data or secrets.
 
-## Owner-only blockers
+## Submission flow
 
-- Choose an individual or business publisher identity and complete OpenAI verification.
-- Make the same operator identity visible in Privacy Policy and Terms before submission.
-- Provide the domain challenge token issued by the submission portal.
-- Create the reviewer account fixture.
+1. Complete [TRP-022](../../tasks/TRP-022-public-content-seo.md) and [TRP-023](../../tasks/TRP-023-wahoo-production-approval.md).
+2. In OpenAI Platform choose the organization/project and finish individual or business verification.
+3. Open the plugin submission portal, select **Create plugin** → **With MCP**, and use the Universal production endpoint.
+4. Configure OAuth and reviewer credentials; add the issued domain challenge token to production.
+5. Select **Scan Tools**, compare discovered schemas, MCP instructions and annotations with actual behavior, fix discrepancies and rescan.
+6. Add listing, prompts, tests, country availability, release notes and policy attestations.
+7. Submit for review. Submission does not publish immediately; after approval, publish separately from the portal.
 
-OpenAI does not publish immediately after submission. Review duration is not guaranteed; after approval, the owner performs a separate Publish action.
+Review time is not guaranteed. A server or metadata change after approval requires scanning and submitting a new reviewed version before publication.

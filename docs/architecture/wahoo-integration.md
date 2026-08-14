@@ -1,8 +1,10 @@
 # Интеграция Wahoo
 
-Статус: **Production verified**
+Статус: **Production infrastructure verified; Wahoo application remains Sandbox pending Production review**
 
 TRAPEAK подключает Wahoo напрямую через Wahoo Cloud API и общий server-only provider adapter. Клиентский secret и пользовательские токены не передаются в браузер.
+
+Здесь важно различать два статуса: OAuth, sync и webhooks проверены на production-домене TRAPEAK, но режим самого приложения в Wahoo Developer Portal остаётся Sandbox. Переход приложения в Wahoo Production требует отдельной заявки и review по [TRP-023](../../tasks/TRP-023-wahoo-production-approval.md).
 
 ## OAuth flow
 

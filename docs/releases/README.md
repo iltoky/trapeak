@@ -2,7 +2,7 @@
 
 | Версия | Статус | Описание |
 |---|---|---|
-| [v0.9.2](v0.9.2.md) | Published; production migration and authenticated MCP e2e pending | Упрощённый Profile, wearable-only daily context и каталог таблиц |
+| [v0.9.2](v0.9.2.md) | Published; production migration applied; authenticated MCP e2e pending | Упрощённый Profile, wearable-only daily context и каталог таблиц |
 | [v0.9.1](v0.9.1.md) | Published; production migration applied; authenticated MCP e2e pending | Дата рождения, история и динамика веса, напоминания через AI |
 | [v0.9.0](v0.9.0.md) | Published; authenticated MCP e2e passed | User Profile, препараты, полнота и progressive onboarding через AI |
 | [v0.8.0](v0.8.0.md) | Published; authenticated MCP e2e pending | Исторический контекст тренировок и питания для выбора сегодняшней тренировки |
