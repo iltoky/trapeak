@@ -72,6 +72,13 @@ export type TrainingContext = Readonly<{
     sevenDayDistanceChangePercent: number | null;
     sevenDayTrainingStressChangePercent: number | null;
   }>;
+  decisionSupport: Readonly<{
+    interpretation: "context_only";
+    readinessScoreAvailable: false;
+    freshUserCheckInRequired: boolean;
+    checkInTopics: readonly string[];
+    principles: readonly string[];
+  }>;
   nutrition: Readonly<{
     today: NutritionContextDay | null;
     recentDays: readonly NutritionContextDay[];
@@ -91,6 +98,7 @@ export type TrainingContext = Readonly<{
     dailyActivityAvailable: false;
     stressAvailable: false;
     recoveryAvailable: false;
+    subjectiveCheckInAvailable: false;
     limitations: readonly string[];
   }>;
 }>;
@@ -291,7 +299,8 @@ export function buildTrainingContext(input: Readonly<{
   const goalsAndRestrictionsAvailable = goalsAvailable && healthAndMedicationContextAvailable;
   const limitations = [
     "Connected sleep, daily activity, provider stress, HRV, readiness, and recovery measurements are not ingested yet; do not replace them with Profile estimates.",
-    "High-load signals use provider TSS >= 80 and do not by themselves classify a workout as anaerobic.",
+    "Provider TSS and the TSS >= 80 signal are descriptive inputs only. They are not a universal hard-workout threshold, readiness score, anaerobic classification, or injury predictor.",
+    "TRAPEAK does not currently store a dated subjective readiness check-in. Ask about current fatigue, soreness or pain, illness symptoms, sleep quality, and willingness to train before prescribing intensity.",
   ];
   if (!input.userProfile) {
     limitations.unshift(
@@ -360,6 +369,25 @@ export function buildTrainingContext(input: Readonly<{
         previous7Days.trainingStressScore,
       ),
     },
+    decisionSupport: {
+      interpretation: "context_only",
+      readinessScoreAvailable: false,
+      freshUserCheckInRequired: true,
+      checkInTopics: [
+        "current fatigue and energy",
+        "muscle soreness or pain",
+        "illness symptoms",
+        "last night's sleep quality",
+        "willingness to train and available time",
+      ],
+      principles: [
+        "Treat the workout sequence, including any back-to-back demanding sessions, as one input rather than a decision rule.",
+        "Interpret recent load relative to the user's own history, activity type, experience, goals, and medical constraints.",
+        "Use subjective response and available recovery measurements alongside external workload; do not infer missing measurements.",
+        "Prefer a conservative recommendation or ask follow-up questions when important current-state data is missing or conflicting.",
+        "Explain which facts influenced the recommendation and distinguish measured facts from uncertainty.",
+      ],
+    },
     nutrition: {
       today: nutritionDays.find(({ date }) => date === todayDate) ?? null,
       recentDays: nutritionDays,
@@ -381,6 +409,7 @@ export function buildTrainingContext(input: Readonly<{
       dailyActivityAvailable: false,
       stressAvailable: false,
       recoveryAvailable: false,
+      subjectiveCheckInAvailable: false,
       limitations,
     },
   };
