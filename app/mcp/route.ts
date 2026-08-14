@@ -3,6 +3,12 @@ import { auth } from "@clerk/nextjs/server";
 import { createMcpHandler, withMcpAuth } from "mcp-handler";
 import { z } from "zod";
 
+import {
+  authorizeDelegatedRead,
+  listReceivedDataAccessGrants,
+} from "@/lib/access/data";
+import { dataPermissions } from "@/lib/access/model";
+import { getDelegatedTrainingContext } from "@/lib/access/views";
 import { requireMcpUserId } from "@/lib/mcp/auth";
 import { getIsoUtcOffsetMinutes } from "@/lib/mcp/dates";
 import {
@@ -150,6 +156,13 @@ const weightStatusSchema = z.object({
   weightUpdateDue: z.boolean(),
 });
 const profileDerivedSchema = z.object({ ageYears: z.number().int().nullable() });
+const dataPermissionSchema = z.enum(dataPermissions);
+const sharedSubjectSchema = z.object({
+  grantId: z.string().uuid(),
+  displayName: z.string(),
+  permissions: z.array(dataPermissionSchema),
+  expiresAt: z.string(),
+});
 const trainingContextSchema = z.object({
   asOf: z.string(),
   utcOffsetMinutes: z.number().int(),
@@ -300,6 +313,179 @@ const userProfileResultSchema = z.object({
 
 const handler = createMcpHandler(
   (server) => {
+    server.registerTool(
+      "list_shared_subjects",
+      {
+        title: "List people who shared data with me",
+        description:
+          "List active, unexpired read-only data grants accepted by the authenticated user. Use this before reading another person's data. A person may grant only selected categories. Never combine different grant IDs in one answer unless the user explicitly requests a comparison and every required permission is present.",
+        outputSchema: z.object({ subjects: z.array(sharedSubjectSchema), count: z.number().int() }),
+        annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
+      },
+      async (context) => {
+        const userId = requireMcpUserId(context.http?.authInfo);
+        const grants = await listReceivedDataAccessGrants(userId);
+        const subjects = await Promise.all(grants.map(async (grant) => {
+          const profiles = await getMcpAthleteProfiles(grant.ownerUserId);
+          return {
+            grantId: grant.id,
+            displayName: profiles.find(({ displayName }) => displayName)?.displayName
+              ?? "Shared TRAPEAK user",
+            permissions: [...grant.permissions],
+            expiresAt: grant.expiresAt,
+          };
+        }));
+        return {
+          content: [{ type: "text", text: `Found ${subjects.length} active shared data grants.` }],
+          structuredContent: { subjects, count: subjects.length },
+        };
+      },
+    );
+
+    server.registerTool(
+      "get_shared_training_context",
+      {
+        title: "Get shared training context",
+        description:
+          "Read one person's training context through an accepted grant with the training permission. Pass only a grantId returned by list_shared_subjects. Health, nutrition, and weight fields are removed unless their categories are also granted.",
+        inputSchema: z.object({
+          grantId: z.string().uuid(),
+          asOf: z.string().datetime({ offset: true }).optional(),
+          utcOffsetMinutes: z.number().int().min(-720).max(840).optional(),
+          historyDays: z.number().int().min(14).max(56).default(28),
+        }),
+        outputSchema: z.object({ context: trainingContextSchema.nullable() }),
+        annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
+      },
+      async (input, context) => {
+        const userId = requireMcpUserId(context.http?.authInfo);
+        const trainingContext = await getDelegatedTrainingContext({
+          grantId: input.grantId,
+          recipientUserId: userId,
+          oauthClientId: context.http?.authInfo?.clientId,
+          asOf: input.asOf ? new Date(input.asOf) : new Date(),
+          utcOffsetMinutes: input.utcOffsetMinutes ?? getIsoUtcOffsetMinutes(input.asOf),
+          historyDays: input.historyDays,
+        });
+        return {
+          content: [{ type: "text", text: trainingContext
+            ? "Shared training context found. State whose context is being analyzed and respect all omitted categories."
+            : "This shared training context is unavailable, expired, revoked, or not permitted." }],
+          structuredContent: { context: trainingContext },
+        };
+      },
+    );
+
+    server.registerTool(
+      "list_shared_nutrition",
+      {
+        title: "List shared nutrition and weight data",
+        description:
+          "Read nutrition entries and dated weight history for one accepted grant with the nutrition permission.",
+        inputSchema: z.object({
+          grantId: z.string().uuid(), from: dateSchema.optional(), to: dateSchema.optional(),
+          limit: z.number().int().min(1).max(200).default(100),
+        }),
+        outputSchema: z.object({
+          entries: z.array(nutritionEntrySchema),
+          weightEntries: z.array(weightEntrySchema),
+          permitted: z.boolean(),
+        }),
+        annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
+      },
+      async (input, context) => {
+        const userId = requireMcpUserId(context.http?.authInfo);
+        const access = await authorizeDelegatedRead({
+          grantId: input.grantId, recipientUserId: userId, permission: "nutrition",
+          resourceType: "nutrition_and_weight", oauthClientId: context.http?.authInfo?.clientId,
+        });
+        if (!access) return {
+          content: [{ type: "text", text: "Shared nutrition data is unavailable or not permitted." }],
+          structuredContent: { entries: [], weightEntries: [], permitted: false },
+        };
+        const [entries, weightEntries] = await Promise.all([
+          listNutritionEntries({ userId: access.ownerUserId, from: input.from, to: input.to, limit: input.limit }),
+          listWeightEntries({ userId: access.ownerUserId, from: input.from, to: input.to, limit: input.limit }),
+        ]);
+        return {
+          content: [{ type: "text", text: "Shared nutrition and weight data found." }],
+          structuredContent: { entries: [...entries], weightEntries: [...weightEntries], permitted: true },
+        };
+      },
+    );
+
+    server.registerTool(
+      "list_shared_health",
+      {
+        title: "List shared health data",
+        description:
+          "Read explicitly shared health profile fields and laboratory report summaries for one accepted grant with the sensitive health permission.",
+        inputSchema: z.object({ grantId: z.string().uuid(), limit: z.number().int().min(1).max(100).default(50) }),
+        outputSchema: z.object({
+          health: z.object({
+            injuries: userProfileSchema.shape.injuries,
+            healthConditions: userProfileSchema.shape.healthConditions,
+            contraindications: userProfileSchema.shape.contraindications,
+            medications: userProfileSchema.shape.medications,
+          }).nullable(),
+          labReports: z.array(labReportSummarySchema),
+          permitted: z.boolean(),
+        }),
+        annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
+      },
+      async (input, context) => {
+        const userId = requireMcpUserId(context.http?.authInfo);
+        const access = await authorizeDelegatedRead({
+          grantId: input.grantId, recipientUserId: userId, permission: "health",
+          resourceType: "health_and_labs", oauthClientId: context.http?.authInfo?.clientId,
+        });
+        if (!access) return {
+          content: [{ type: "text", text: "Shared health data is unavailable or not permitted." }],
+          structuredContent: { health: null, labReports: [], permitted: false },
+        };
+        const [profile, labReports] = await Promise.all([
+          getUserProfile(access.ownerUserId),
+          listLabReports({ userId: access.ownerUserId, limit: input.limit }),
+        ]);
+        const value = profile.record?.profile;
+        const health = value ? {
+          injuries: value.injuries,
+          healthConditions: value.healthConditions,
+          contraindications: value.contraindications,
+          medications: value.medications,
+        } : null;
+        return {
+          content: [{ type: "text", text: "Sensitive shared health data found. Do not diagnose or disclose it outside this request." }],
+          structuredContent: { health, labReports: [...labReports], permitted: true },
+        };
+      },
+    );
+
+    server.registerTool(
+      "get_shared_recovery",
+      {
+        title: "Get shared recovery data availability",
+        description:
+          "Check recovery-category access for one shared subject. No dated recovery source is ingested yet, so this currently reports availability without inventing values.",
+        inputSchema: z.object({ grantId: z.string().uuid() }),
+        outputSchema: z.object({ permitted: z.boolean(), available: z.literal(false) }),
+        annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
+      },
+      async (input, context) => {
+        const userId = requireMcpUserId(context.http?.authInfo);
+        const access = await authorizeDelegatedRead({
+          grantId: input.grantId, recipientUserId: userId, permission: "recovery",
+          resourceType: "recovery_availability", oauthClientId: context.http?.authInfo?.clientId,
+        });
+        return {
+          content: [{ type: "text", text: access
+            ? "Recovery access is permitted, but TRAPEAK has no dated recovery source yet."
+            : "Shared recovery data is unavailable or not permitted." }],
+          structuredContent: { permitted: access !== null, available: false as const },
+        };
+      },
+    );
+
     server.registerTool(
       "get_athlete_profile",
       {
@@ -1021,7 +1207,7 @@ const handler = createMcpHandler(
     );
   },
   {
-    serverInfo: { name: "trapeak", version: "0.9.2" },
+    serverInfo: { name: "trapeak", version: "0.10.0" },
     instructions:
       "TRAPEAK stores authenticated fitness, nutrition, laboratory, dated weight, and custom profile data. For profile onboarding, call get_user_profile first, ask a short grouped questionnaire, and save only facts explicitly provided by the user. Store birthDate rather than fixed age; save exact weight measurements with create_weight_entry, never estimate them. Keep only qualitative workActivityContext in Profile. Sleep, daily activity, stress, HRV, readiness, and recovery must come from connected wearable sources when available; do not infer them or store manual substitutes in Profile. Caffeine and alcohol are not permanent Profile fields; a specific consumed drink may be logged as nutrition only after an explicit request. When weightUpdateDue is true, briefly offer to record a new measurement, especially every 14 days for weight-loss goals or every 30 days otherwise. After each profile update, say that the returned percentage is profile completeness rather than a health score and offer the suggested topic groups as optional follow-ups. Never infer medical conditions, contraindications, injuries, medications, dosage, or schedule. Before recommending today's workout, call get_training_context. Treat it as decision context rather than a readiness score: consider the user's goals and medical constraints, individual training history, recent sequence and load, activity type, available recovery data, nutrition and weight context together. A pair of demanding sessions, a TSS threshold, or a week-over-week change is only one signal and must not determine the recommendation by itself. When decisionSupport requests a fresh check-in, ask briefly about current fatigue or energy, soreness or pain, illness symptoms, last night's sleep, willingness to train, and available time before prescribing intensity. Treat availability flags and limitations as part of the answer, distinguish measurements from uncertainty, and explain the main factors behind the recommendation. Call create or update tools only after the user explicitly asks to save data. Call deletion tools only after the user explicitly asks to permanently delete the relevant record or entire profile, and pass confirm=true only for that explicit request. Nutrition estimates must include assumptions. Laboratory tools preserve reported values, units, ranges, and flags without inventing missing data or diagnosing conditions. Read and deletion tools may act only on records owned by the authenticated user.",
   },

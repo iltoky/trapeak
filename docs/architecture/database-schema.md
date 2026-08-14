@@ -16,6 +16,7 @@ erDiagram
     provider_connections ||--o{ fitness_activities : "user_id + provider"
     provider_connections ||--o| provider_sync_state : "user_id + provider"
     lab_reports ||--|{ lab_results : "report_id"
+    data_access_grants ||--o{ data_access_audit_events : "grant_id"
 ```
 
 `nutrition_entries`, `user_profiles`, `weight_entries` и provider-таблицы связаны одним проверенным `user_id`, но намеренно не имеют внешнего ключа на Clerk.
@@ -34,6 +35,8 @@ erDiagram
 | `lab_results` | Показатели внутри лабораторного отчёта | AI через MCP вместе с отчётом |
 | `user_profiles` | Долгоживущий профиль целей и ограничений | AI onboarding через MCP |
 | `weight_entries` | История точных измерений веса | AI через MCP; Profile v1 migration |
+| `data_access_grants` | Временный read-only доступ по email и категориям | Shared access dashboard |
+| `data_access_audit_events` | Журнал создания, принятия, чтения и отзыва grants | TRAPEAK server |
 
 ## Системная таблица
 
@@ -129,6 +132,22 @@ erDiagram
 - **Используется:** `list_weight_entries`, Profile completeness, изменения за 7/30/90 дней, reminder status и `get_training_context`.
 - **Идемпотентность:** unique `(user_id, idempotency_key)`; идентичная повторная отправка возвращает существующий ID.
 - **Удаление:** конкретная точка удаляется только с явным подтверждением; удаление custom Profile историю веса не затрагивает.
+
+## Делегированный доступ
+
+### `data_access_grants`
+
+- **Назначение:** связывает владельца и получателя временным read-only разрешением без ролей.
+- **Выдача:** владелец указывает email, срок и категории `training`, `nutrition`, `health`, `recovery`.
+- **Принятие:** в базе хранится только SHA-256 hash invitation token; принять или отклонить приглашение может вошедший пользователь с тем же primary email.
+- **Проверка:** каждый shared read требует active status, непросроченный grant, совпадающий Clerk recipient ID и нужную категорию.
+- **Отзыв:** владелец может отозвать pending или active grant немедленно.
+
+### `data_access_audit_events`
+
+- **Назначение:** append-only журнал создания, принятия, отклонения, отзыва и чтения shared data.
+- **Хранит:** grant, actor, действие, категорию, тип ресурса, OAuth client ID и время.
+- **Ownership:** владелец видит только события grants, где `owner_user_id` совпадает с его Clerk ID.
 
 ## Динамические health-метрики: ещё не хранятся
 

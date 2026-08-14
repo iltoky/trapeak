@@ -1,23 +1,33 @@
 # TRP-024 — Делегированный доступ к данным
 
-Статус: **Discovery backlog; no development yet**
+Статус: **Implementation complete; migration and authenticated e2e pending**
 
 ## Description
 
-Спроектировать отзывный доступ другого зарегистрированного пользователя к выбранным данным владельца. Основные сценарии — спортсмен выдаёт доступ тренеру или пациент выдаёт доступ врачу. Роль служит понятной меткой, а фактические права всегда определяются явными data scopes.
+Реализовать отзывный read-only доступ другого зарегистрированного пользователя к выбранным данным владельца. Владелец указывает email, категории данных и срок. Роли и presets не используются.
 
-## Acceptance Criteria для будущей декомпозиции
+Категории доступа:
 
-- Владелец выбирает конкретного TRAPEAK user, группы данных, срок действия и при необходимости исторический период.
-- Минимальные группы доступа проектируются отдельно: workouts/training context, goals/schedule, nutrition, weight, labs, health conditions/contraindications/medications и будущие sleep/recovery metrics.
+- `training`: тренировки, training context, цели, опыт, расписание и предпочтения;
+- `nutrition`: питание и история веса;
+- `health`: анализы, заболевания, травмы, противопоказания и препараты;
+- `recovery`: будущие сон, HRV, stress, readiness, дневная активность и recovery.
+
+## Acceptance Criteria
+
+- Владелец вводит email получателя и выбирает от одной до четырёх категорий и срок действия.
+- Одноразовая invitation link хранится только в виде SHA-256 hash и связывается с Clerk ID после входа получателя с тем же primary email.
 - Первый срез только read-only; изменение и удаление данных остаются у владельца.
-- Медицинские данные, препараты и Labs требуют отдельного явного consent и не включаются автоматически в роль `coach`.
-- Grant можно принять, отклонить и отозвать; expiry применяется сервером, а не AI-инструкцией.
+- `health` требует отдельного явного consent и предупреждения о чувствительности данных.
+- Grant можно принять и отозвать; reject добавляется вместе с invitation UI. Expiry применяется сервером, а не AI-инструкцией.
 - Каждый delegated read проверяет владельца, получателя и scopes; произвольный `user_id` никогда не становится параметром доступа.
 - Владелец видит активные grants и audit trail: кто, когда и к какой группе обращался.
-- AI получателя видит данные только в пределах grant и явно обозначает, данные какого спортсмена/пациента анализируются.
+- AI получателя видит данные только в пределах grant. В audit сохраняется OAuth `clientId`, а будущая client policy дополнительно ограничит категории для конкретного AI.
 - Threat model покрывает invite hijacking, confused deputy, revoked/expired grants, account takeover и утечку чувствительных полей.
 
-## Следующий шаг
+## Реализация по срезам
 
-Подготовить отдельный security/authorization design: UX приглашения, модели `data_access_grants` и scopes, audit events, MCP subject selection и правила удаления. До утверждения design schema и MCP tools не добавлять.
+1. Backend foundation: grants, одноразовое приглашение, accept/revoke, expiry и audit.
+2. Dashboard UI создания, принятия и отзыва доступа с отдельным health consent.
+3. Read-only MCP tools с обязательным `grantId` и серверной проверкой категории.
+4. Client policies: пересечение grant permissions с разрешениями конкретного OAuth `clientId` — отдельный следующий срез. В v0.10.0 `clientId` уже сохраняется в audit, но не расширяет и не сужает human grant.
