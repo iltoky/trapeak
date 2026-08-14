@@ -1,6 +1,6 @@
 # TRP-021 — Упрощение Profile и каталог данных
 
-Статус: **Implemented; production migration and authenticated MCP e2e pending**
+Статус: **Published; production migration and authenticated MCP e2e pending**
 
 ## Description
 
@@ -18,8 +18,9 @@
 ## Release Actions
 
 1. Применить migration `0009_profile_daily_context.sql` после `0008_weight_history.sql`.
-2. Опубликовать MCP `0.9.2` и открыть новый AI-диалог для обновления schema.
-3. Проверить Profile и `get_training_context` на production account.
+2. [x] Опубликовать MCP `0.9.2`.
+3. После migration открыть новый AI-диалог для обновления schema.
+4. Проверить Profile и `get_training_context` на production account.
 
 ## Testing Recommendations
 

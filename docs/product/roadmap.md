@@ -13,7 +13,7 @@
 | 8. Training context | История 14–56 дней, сравнение нагрузки, последовательность тренировок и питание для выбора сегодняшней тренировки | Published; authenticated MCP e2e pending |
 | 9. User Profile | Цели, здоровье, препараты, долгоживущий контекст и progressive onboarding через AI | Published; authenticated MCP e2e passed |
 | 10. Weight history | Дата рождения вместо возраста, датированные измерения веса, динамика и напоминания | Published; production migration applied; authenticated MCP e2e pending |
-| 11. Profile data cleanup | Work context без дублирования wearable-метрик и полный каталог таблиц/источников | Implemented; production migration and authenticated MCP e2e pending |
+| 11. Profile data cleanup | Work context без дублирования wearable-метрик и полный каталог таблиц/источников | Published; production migration and authenticated MCP e2e pending |
 | Public distribution | Публикация TRAPEAK в каталоге ChatGPT и Codex | Paused by product decision |
 | После MVP | Garmin после API approval, recovery и другие health-источники | Backlog |
 
