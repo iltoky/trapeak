@@ -1,16 +1,21 @@
 import { SignUp } from "@clerk/nextjs";
 
 import { isAuthConfigured } from "@/lib/auth/config";
+import { getRequestLocale } from "@/lib/i18n/server";
+import { getUiMessages } from "@/lib/i18n/ui";
 import { AuthShell } from "../../auth-shell";
 
-export const metadata = { title: "Create account" };
+export const metadata = { title: "Create account", robots: { index: false, follow: false } };
 
-export default function SignUpPage() {
+export default async function SignUpPage() {
+  const locale = await getRequestLocale();
+  const messages = getUiMessages(locale).auth;
   return (
     <AuthShell
-      eyebrow="TRAPEAK ACCOUNT"
-      title="Create your account."
-      description="Your account keeps every wearable connection isolated and under your control."
+      eyebrow={messages.eyebrow}
+      title={messages.signUpTitle}
+      description={messages.signUpDescription}
+      locale={locale}
     >
       {isAuthConfigured() ? (
         <SignUp
@@ -25,7 +30,7 @@ export default function SignUpPage() {
         />
       ) : (
         <p className="auth-setup">
-          Account registration is being configured. Please check back soon.
+          {messages.signUpSetup}
         </p>
       )}
     </AuthShell>

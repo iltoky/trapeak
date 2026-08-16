@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-export function CopyRequestButton({ request }: { request: string }) {
+export function CopyRequestButton({ request, labels = { idle: "Copy request", copied: "Copied", error: "Copy failed" } }: { request: string; labels?: Readonly<Record<"idle" | "copied" | "error", string>> }) {
   const [status, setStatus] = useState<"idle" | "copied" | "error">("idle");
 
   async function copy() {
@@ -16,6 +16,6 @@ export function CopyRequestButton({ request }: { request: string }) {
   }
 
   return <button className="copy-request" type="button" onClick={copy} aria-live="polite">
-    {status === "copied" ? "Copied" : status === "error" ? "Copy failed" : "Copy request"}
+    {labels[status]}
   </button>;
 }

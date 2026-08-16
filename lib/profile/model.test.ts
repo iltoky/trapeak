@@ -29,6 +29,7 @@ test("starts an empty profile at zero percent", () => {
   assert.equal(completeness.stage, "initial");
   assert.equal(completeness.totalWeight, 100);
   assert.equal(completeness.suggestedNextSections[0]?.key, "healthAndMedications");
+  assert.equal(completeness.suggestedNextSections[0]?.title, "healthAndMedications");
 });
 
 test("counts explicit empty lists and declined fields as completed", () => {

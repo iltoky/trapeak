@@ -11,6 +11,7 @@
 ## Архитектура
 
 - [Обзор](architecture/overview.md)
+- [Мультиязычность и localized SEO](architecture/i18n.md)
 - [Данные и секреты](architecture/data-and-secrets.md)
 - [Таблицы БД и источники данных](architecture/database-schema.md)
 - [Интеграция Wahoo](architecture/wahoo-integration.md)

@@ -1,44 +1,50 @@
 import Link from "next/link";
 import { isAuthConfigured } from "@/lib/auth/config";
+import { localePath, type AppLocale } from "@/lib/i18n/config";
+import { getUiMessages } from "@/lib/i18n/ui";
 import { BrandLogo } from "./brand";
+import { LanguageSelector } from "./language-selector";
 
-function HeaderActions({ authConfigured }: { authConfigured: boolean }) {
+function HeaderActions({ authConfigured, locale }: { authConfigured: boolean; locale: AppLocale }) {
+  const messages = getUiMessages(locale).common;
   return authConfigured ? (
     <div className="nav-auth">
-      <Link className="nav-sign-in" href="/sign-in">Sign in</Link>
-      <Link className="button black nav-cta" href="/sign-up">Create account</Link>
+      <Link className="nav-sign-in" href="/sign-in">{messages.signIn}</Link>
+      <Link className="button black nav-cta" href="/sign-up">{messages.createAccount}</Link>
     </div>
   ) : (
-    <a className="button black nav-cta" href="mailto:support@trapeak.com?subject=TRAPEAK%20early%20access">Join early access</a>
+    <a className="button black nav-cta" href="mailto:support@trapeak.com?subject=TRAPEAK">{messages.earlyAccess}</a>
   );
 }
 
-export function SiteHeader() {
+export function SiteHeader({ locale = "en", publicPath = "/" }: Readonly<{ locale?: AppLocale; publicPath?: string }>) {
   const authConfigured = isAuthConfigured();
+  const messages = getUiMessages(locale).common;
+  const home = localePath(locale);
 
   return (
     <header className="nav shell">
-      <Link className="wordmark" href="/" aria-label="TRAPEAK home"><BrandLogo /></Link>
-      <nav className="desktop-nav" aria-label="Main navigation">
-        <Link href="/#how">How it works</Link>
-        <Link href="/#experience">Examples</Link>
-        <Link href="/ai-guides">Use cases</Link>
-        <Link href="/#faq">FAQ</Link>
+      <Link className="wordmark" href={home} aria-label={`TRAPEAK · ${messages.home}`}><BrandLogo /></Link>
+      <nav className="desktop-nav" aria-label={messages.menu}>
+        <Link href={`${home}#how`}>{messages.how}</Link>
+        <Link href={`${home}#experience`}>{messages.examples}</Link>
+        <Link href={localePath(locale, "/ai-guides")}>{messages.useCases}</Link>
+        <Link href={`${home}#faq`}>{messages.faq}</Link>
       </nav>
-      <div className="desktop-actions"><HeaderActions authConfigured={authConfigured} /></div>
+      <div className="desktop-actions"><LanguageSelector locale={locale} label={messages.language} publicPath={publicPath} /><HeaderActions authConfigured={authConfigured} locale={locale} /></div>
       <details className="mobile-menu">
         <summary>
-          <span>Menu</span>
+          <span>{messages.menu}</span>
           <span className="mobile-menu-icon" aria-hidden="true"><i /><i /></span>
         </summary>
         <div className="mobile-menu-panel">
-          <nav aria-label="Mobile navigation">
-            <Link href="/#how"><span>01</span>How it works</Link>
-            <Link href="/#experience"><span>02</span>Examples</Link>
-            <Link href="/ai-guides"><span>03</span>Use cases</Link>
-            <Link href="/#faq"><span>04</span>FAQ</Link>
+          <nav aria-label={messages.menu}>
+            <Link href={`${home}#how`}><span>01</span>{messages.how}</Link>
+            <Link href={`${home}#experience`}><span>02</span>{messages.examples}</Link>
+            <Link href={localePath(locale, "/ai-guides")}><span>03</span>{messages.useCases}</Link>
+            <Link href={`${home}#faq`}><span>04</span>{messages.faq}</Link>
           </nav>
-          <div className="mobile-menu-actions"><HeaderActions authConfigured={authConfigured} /></div>
+          <div className="mobile-menu-actions"><LanguageSelector locale={locale} label={messages.language} publicPath={publicPath} /><HeaderActions authConfigured={authConfigured} locale={locale} /></div>
         </div>
       </details>
     </header>

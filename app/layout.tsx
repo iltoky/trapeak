@@ -32,6 +32,7 @@ export const metadata: Metadata = {
     shortcut: "/brand/trapeak-app-icon.svg",
     apple: "/brand/trapeak-app-icon.png",
   },
+  alternates: { canonical: "/en/" },
 };
 
 export default function RootLayout({
@@ -40,7 +41,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >

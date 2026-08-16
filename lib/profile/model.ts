@@ -4,7 +4,9 @@ export const profileStoredFieldKeys = [
   "birthDate",
   "biologicalSex",
   "heightCentimeters",
+  "locale",
   "timeZone",
+  "measurementSystem",
   "goals",
   "trainingExperience",
   "preferredActivities",
@@ -22,7 +24,7 @@ export const profileStoredFieldKeys = [
 ] as const;
 
 export const profileFieldKeys = [
-  ...profileStoredFieldKeys.filter((field) => field !== "weightReminderIntervalDays"),
+  ...profileStoredFieldKeys.filter((field) => !["weightReminderIntervalDays", "locale", "measurementSystem"].includes(field)),
   "weightHistory",
 ] as const;
 
@@ -131,7 +133,9 @@ const profileShape = {
   birthDate: birthDateSchema.nullable(),
   biologicalSex: z.enum(biologicalSexValues).nullable(),
   heightCentimeters: z.number().min(80).max(260).nullable(),
+  locale: z.enum(["en", "pt-BR", "es-419", "id", "vi", "hi", "bn"]).nullable(),
   timeZone: optionalText(100),
+  measurementSystem: z.enum(["metric", "imperial"]).nullable(),
   goals: z.array(profileGoalSchema).max(10).nullable(),
   trainingExperience: z.enum(trainingExperienceValues).nullable(),
   preferredActivities: nullableStringList,
@@ -191,7 +195,9 @@ export const emptyUserProfile: UserProfile = {
   birthDate: null,
   biologicalSex: null,
   heightCentimeters: null,
+  locale: null,
   timeZone: null,
+  measurementSystem: null,
   goals: null,
   trainingExperience: null,
   preferredActivities: null,
@@ -215,7 +221,7 @@ const sections: readonly Readonly<{
 }>[] = [
   {
     key: "basics",
-    title: "Основные данные",
+    title: "basics",
     fields: [
       { key: "birthDate", weight: 3 },
       { key: "biologicalSex", weight: 2 },
@@ -226,7 +232,7 @@ const sections: readonly Readonly<{
   },
   {
     key: "trainingAndGoals",
-    title: "Тренировки и цели",
+    title: "trainingAndGoals",
     fields: [
       { key: "goals", weight: 13 },
       { key: "trainingExperience", weight: 6 },
@@ -236,7 +242,7 @@ const sections: readonly Readonly<{
   },
   {
     key: "healthAndMedications",
-    title: "Здоровье и препараты",
+    title: "healthAndMedications",
     fields: [
       { key: "injuries", weight: 8 },
       { key: "healthConditions", weight: 7 },
@@ -246,7 +252,7 @@ const sections: readonly Readonly<{
   },
   {
     key: "nutrition",
-    title: "Питание",
+    title: "nutrition",
     fields: [
       { key: "dietaryRestrictions", weight: 6 },
       { key: "nutritionNotes", weight: 4 },
@@ -254,14 +260,14 @@ const sections: readonly Readonly<{
   },
   {
     key: "dailyContext",
-    title: "Контекст дня и работы",
+    title: "dailyContext",
     fields: [
       { key: "workActivityContext", weight: 5 },
     ],
   },
   {
     key: "scheduleAndEquipment",
-    title: "Расписание и оборудование",
+    title: "scheduleAndEquipment",
     fields: [
       { key: "weeklyAvailability", weight: 9 },
       { key: "equipment", weight: 6 },

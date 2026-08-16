@@ -1,7 +1,8 @@
 "use client";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-export function AcceptButton({ token }: { token: string }) {
+import type { UiMessages } from "@/lib/i18n/ui";
+export function AcceptButton({ token, messages }: { token: string; messages: UiMessages["access"] }) {
   const router = useRouter();
   const [pendingAction, setPendingAction] = useState<"accept" | "reject" | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -18,7 +19,7 @@ export function AcceptButton({ token }: { token: string }) {
       return;
     }
     const result = await response.json();
-    setError(result.error ?? "Invitation response could not be saved.");
+    setError(messages.responseError);
     setPendingAction(null);
   }
 
@@ -29,14 +30,14 @@ export function AcceptButton({ token }: { token: string }) {
         disabled={pendingAction !== null}
         onClick={() => respond("accept")}
       >
-        {pendingAction === "accept" ? "Accepting…" : "Accept read-only access"}
+        {pendingAction === "accept" ? messages.accepting : messages.accept}
       </button>
       <button
         className="button black"
         disabled={pendingAction !== null}
         onClick={() => respond("reject")}
       >
-        {pendingAction === "reject" ? "Rejecting…" : "Reject"}
+        {pendingAction === "reject" ? messages.rejecting : messages.reject}
       </button>
     </div>
     {error && <p className="access-error">{error}</p>}
