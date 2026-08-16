@@ -1,16 +1,21 @@
 import { SignIn } from "@clerk/nextjs";
 
 import { isAuthConfigured } from "@/lib/auth/config";
+import { getRequestLocale } from "@/lib/i18n/server";
+import { getUiMessages } from "@/lib/i18n/ui";
 import { AuthShell } from "../../auth-shell";
 
-export const metadata = { title: "Sign in" };
+export const metadata = { title: "Sign in", robots: { index: false, follow: false } };
 
-export default function SignInPage() {
+export default async function SignInPage() {
+  const locale = await getRequestLocale();
+  const messages = getUiMessages(locale).auth;
   return (
     <AuthShell
-      eyebrow="TRAPEAK ACCOUNT"
-      title="Welcome back."
-      description="Sign in to manage your personal fitness-data connections."
+      eyebrow={messages.eyebrow}
+      title={messages.signInTitle}
+      description={messages.signInDescription}
+      locale={locale}
     >
       {isAuthConfigured() ? (
         <SignIn
@@ -25,7 +30,7 @@ export default function SignInPage() {
         />
       ) : (
         <p className="auth-setup">
-          Account access is being configured. Please check back soon.
+          {messages.signInSetup}
         </p>
       )}
     </AuthShell>

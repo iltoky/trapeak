@@ -1,41 +1,48 @@
 import { UserButton } from "@clerk/nextjs";
 import Link from "next/link";
 
+import { type AppLocale } from "@/lib/i18n/config";
+import { getRequestLocale } from "@/lib/i18n/server";
+import { getUiMessages } from "@/lib/i18n/ui";
 import { BrandLogo } from "./brand";
+import { LanguageSelector } from "./language-selector";
 
-function AccountActions() {
+function AccountActions({ locale }: { locale: AppLocale }) {
+  const messages = getUiMessages(locale).common;
   return (
     <div className="nav-auth">
-      <Link className="nav-sign-in" href="/dashboard">Dashboard</Link>
+      <Link className="nav-sign-in" href="/dashboard">{messages.dashboard}</Link>
       <UserButton />
     </div>
   );
 }
 
-export function AccountHeader() {
+export async function AccountHeader() {
+  const locale = await getRequestLocale();
+  const messages = getUiMessages(locale).common;
   return (
     <header className="nav shell">
-      <Link className="wordmark" href="/" aria-label="TRAPEAK home"><BrandLogo /></Link>
-      <nav className="desktop-nav" aria-label="Main navigation">
-        <Link href="/#how">How it works</Link>
-        <Link href="/#experience">Examples</Link>
-        <Link href="/ai-guides">Use cases</Link>
-        <Link href="/#faq">FAQ</Link>
+      <Link className="wordmark" href="/" aria-label={`TRAPEAK · ${messages.home}`}><BrandLogo /></Link>
+      <nav className="desktop-nav" aria-label={messages.menu}>
+        <Link href="/#how">{messages.how}</Link>
+        <Link href="/#experience">{messages.examples}</Link>
+        <Link href="/ai-guides">{messages.useCases}</Link>
+        <Link href="/#faq">{messages.faq}</Link>
       </nav>
-      <div className="desktop-actions"><AccountActions /></div>
+      <div className="desktop-actions"><LanguageSelector locale={locale} label={messages.language} /><AccountActions locale={locale} /></div>
       <details className="mobile-menu">
         <summary>
-          <span>Menu</span>
+          <span>{messages.menu}</span>
           <span className="mobile-menu-icon" aria-hidden="true"><i /><i /></span>
         </summary>
         <div className="mobile-menu-panel">
-          <nav aria-label="Mobile navigation">
-            <Link href="/#how"><span>01</span>How it works</Link>
-            <Link href="/#experience"><span>02</span>Examples</Link>
-            <Link href="/ai-guides"><span>03</span>Use cases</Link>
-            <Link href="/#faq"><span>04</span>FAQ</Link>
+          <nav aria-label={messages.menu}>
+            <Link href="/#how"><span>01</span>{messages.how}</Link>
+            <Link href="/#experience"><span>02</span>{messages.examples}</Link>
+            <Link href="/ai-guides"><span>03</span>{messages.useCases}</Link>
+            <Link href="/#faq"><span>04</span>{messages.faq}</Link>
           </nav>
-          <div className="mobile-menu-actions"><AccountActions /></div>
+          <div className="mobile-menu-actions"><LanguageSelector locale={locale} label={messages.language} /><AccountActions locale={locale} /></div>
         </div>
       </details>
     </header>
