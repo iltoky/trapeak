@@ -4,6 +4,7 @@ import type { AppLocale } from "@/lib/i18n/config";
 import { localePath } from "@/lib/i18n/config";
 import { getUiMessages } from "@/lib/i18n/ui";
 
+import { LocaleFooter } from "./locale-footer";
 import { SiteHeader } from "./site-header";
 import "./auth.css";
 
@@ -25,7 +26,7 @@ export function AuthShell({
   const common = getUiMessages(locale).common;
   return (
     <main className="auth-page">
-      <SiteHeader locale={locale} publicPath="/" />
+      <SiteHeader locale={locale} />
       <section className="auth-layout shell">
         <div className="auth-copy">
           <p className="section-index">{eyebrow}</p>
@@ -37,6 +38,7 @@ export function AuthShell({
         </div>
         <div className="auth-panel">{children}</div>
       </section>
+      <LocaleFooter locale={locale} />
     </main>
   );
 }

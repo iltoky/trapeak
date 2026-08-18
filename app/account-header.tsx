@@ -5,7 +5,6 @@ import { type AppLocale } from "@/lib/i18n/config";
 import { getRequestLocale } from "@/lib/i18n/server";
 import { getUiMessages } from "@/lib/i18n/ui";
 import { BrandLogo } from "./brand";
-import { LanguageSelector } from "./language-selector";
 
 function AccountActions({ locale }: { locale: AppLocale }) {
   const messages = getUiMessages(locale).common;
@@ -29,7 +28,7 @@ export async function AccountHeader() {
         <Link href="/ai-guides">{messages.useCases}</Link>
         <Link href="/#faq">{messages.faq}</Link>
       </nav>
-      <div className="desktop-actions"><LanguageSelector locale={locale} label={messages.language} /><AccountActions locale={locale} /></div>
+      <div className="desktop-actions"><AccountActions locale={locale} /></div>
       <details className="mobile-menu">
         <summary>
           <span>{messages.menu}</span>
@@ -42,7 +41,7 @@ export async function AccountHeader() {
             <Link href="/ai-guides"><span>03</span>{messages.useCases}</Link>
             <Link href="/#faq"><span>04</span>{messages.faq}</Link>
           </nav>
-          <div className="mobile-menu-actions"><LanguageSelector locale={locale} label={messages.language} /><AccountActions locale={locale} /></div>
+          <div className="mobile-menu-actions"><AccountActions locale={locale} /></div>
         </div>
       </details>
     </header>
