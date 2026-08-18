@@ -3,7 +3,6 @@ import { isAuthConfigured } from "@/lib/auth/config";
 import { localePath, type AppLocale } from "@/lib/i18n/config";
 import { getUiMessages } from "@/lib/i18n/ui";
 import { BrandLogo } from "./brand";
-import { LanguageSelector } from "./language-selector";
 
 function HeaderActions({ authConfigured, locale }: { authConfigured: boolean; locale: AppLocale }) {
   const messages = getUiMessages(locale).common;
@@ -17,7 +16,7 @@ function HeaderActions({ authConfigured, locale }: { authConfigured: boolean; lo
   );
 }
 
-export function SiteHeader({ locale = "en", publicPath = "/" }: Readonly<{ locale?: AppLocale; publicPath?: string }>) {
+export function SiteHeader({ locale = "en" }: Readonly<{ locale?: AppLocale }>) {
   const authConfigured = isAuthConfigured();
   const messages = getUiMessages(locale).common;
   const home = localePath(locale);
@@ -31,7 +30,7 @@ export function SiteHeader({ locale = "en", publicPath = "/" }: Readonly<{ local
         <Link href={localePath(locale, "/ai-guides")}>{messages.useCases}</Link>
         <Link href={`${home}#faq`}>{messages.faq}</Link>
       </nav>
-      <div className="desktop-actions"><LanguageSelector locale={locale} label={messages.language} publicPath={publicPath} /><HeaderActions authConfigured={authConfigured} locale={locale} /></div>
+      <div className="desktop-actions"><HeaderActions authConfigured={authConfigured} locale={locale} /></div>
       <details className="mobile-menu">
         <summary>
           <span>{messages.menu}</span>
@@ -44,7 +43,7 @@ export function SiteHeader({ locale = "en", publicPath = "/" }: Readonly<{ local
             <Link href={localePath(locale, "/ai-guides")}><span>03</span>{messages.useCases}</Link>
             <Link href={`${home}#faq`}><span>04</span>{messages.faq}</Link>
           </nav>
-          <div className="mobile-menu-actions"><LanguageSelector locale={locale} label={messages.language} publicPath={publicPath} /><HeaderActions authConfigured={authConfigured} locale={locale} /></div>
+          <div className="mobile-menu-actions"><HeaderActions authConfigured={authConfigured} locale={locale} /></div>
         </div>
       </details>
     </header>
